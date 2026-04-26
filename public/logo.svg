@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoBg" x1="12" y1="8" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1565C0"/>
+      <stop offset="1" stop-color="#0D47A1"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#logoBg)"/>
+  <!-- Steeple -->
+  <path
+    d="M60 22L38 52h8v38h28V52h8L60 22z"
+    fill="#E3F2FD"
+    stroke="#BBDEFB"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <!-- Cross -->
+  <path
+    d="M60 36v14M52 42h16"
+    stroke="#E3F2FD"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <!-- Door -->
+  <rect x="52" y="72" width="16" height="18" rx="2" fill="#1565C0" stroke="#90CAF9" stroke-width="2"/>
+</svg>
