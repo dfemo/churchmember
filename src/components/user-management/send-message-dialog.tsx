@@ -9,6 +9,11 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 
 type Recipient = MemberListItem | MemberProfile;
 
+type SendWhatsappApiResponse = {
+  messageId?: string | null;
+  toInternationalDisplay?: string;
+};
+
 type SendMessageDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -16,7 +21,8 @@ type SendMessageDialogProps = {
   template: string;
   /** When using Open SMS, keep template saved in the browser (same as before). */
   onPersistTemplate: () => void;
-  onWhatsappSent?: () => void;
+  /** Meta stores recipients as digits only; display uses + here for clarity. */
+  onWhatsappSent?: (info: { toInternationalDisplay: string }) => void;
 };
 
 export function SendMessageDialog({
@@ -60,12 +66,14 @@ export function SendMessageDialog({
     setWaError(null);
     setWaSending(true);
     try {
-      await api.post("/api/messages/whatsapp", {
+      const { data } = await api.post<SendWhatsappApiResponse>("/api/messages/whatsapp", {
         toPhoneNumber: e164,
         message: body,
       });
       onPersistTemplate();
-      onWhatsappSent?.();
+      onWhatsappSent?.({
+        toInternationalDisplay: data.toInternationalDisplay?.trim() || `+${e164}`,
+      });
       onClose();
     } catch (e) {
       setWaError(getApiErrorMessage(e));
@@ -109,9 +117,14 @@ export function SendMessageDialog({
               ) : null}
             </p>
             {e164 ? (
-              <p className="mt-1 text-[11px] font-medium text-emerald-900">
-                WhatsApp / SMS send to international number:{" "}
-                <span className="font-mono text-emerald-950">+{e164}</span>
+              <p className="mt-1 text-[11px] leading-relaxed text-emerald-950">
+                <span className="font-semibold">International:</span>{" "}
+                <span className="font-mono">+{e164}</span>
+                <span className="block text-emerald-900/90">
+                  Meta&apos;s API requires the recipient as digits only (no plus)—{" "}
+                  <span className="font-mono">{e164}</span> is the same number as{" "}
+                  <span className="font-mono">+{e164}</span>.
+                </span>
               </p>
             ) : null}
           </div>
@@ -136,8 +149,8 @@ export function SendMessageDialog({
             <p className="text-xs text-slate-500">
               <span className="font-medium text-slate-700">WhatsApp</span> is sent from the server
               using the Meta WhatsApp Business Cloud API (configure{" "}
-              <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud</code> on the API). The recipient
-              address uses E.164 digits (same normalization as the API database).{" "}
+              <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud</code> on the API). The send payload uses
+              digit-only E.164 (Meta specification — no + in JSON).{" "}
               <span className="font-medium text-slate-700">SMS</span> opens your device&apos;s text app
               (phones only).
             </p>

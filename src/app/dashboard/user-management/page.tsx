@@ -3,13 +3,14 @@
 import { api, getApiErrorMessage } from "@/lib/api";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
+import { formatBirthdayListColumn, isBirthdayCalendarToday } from "@/lib/birthday-calendar";
 import { DEFAULT_TEMPLATE, getStoredWhatsappTemplate, setStoredWhatsappTemplate } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile, UpdateMemberRequest } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { SendMessageDialog } from "@/components/user-management/send-message-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Send } from "lucide-react";
+import { Gift, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 function toDateInput(v: string | null | undefined) {
@@ -214,6 +215,7 @@ export default function UserManagementPage() {
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Name</th>
                 <th className="px-4 py-3 text-left font-medium">Phone</th>
+                <th className="px-4 py-3 text-left font-medium">Birthday</th>
                 <th className="px-4 py-3 text-left font-medium">Role</th>
                 <th className="px-4 py-3 text-left font-medium">Status</th>
                 <th className="px-4 py-3 text-left font-medium">Title</th>
@@ -222,10 +224,40 @@ export default function UserManagementPage() {
               </tr>
             </thead>
             <tbody>
-              {pagedUsers.map((u) => (
-                <tr key={u.id} className="border-t border-slate-100 text-slate-700 hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-medium text-slate-900">{u.fullName}</td>
+              {pagedUsers.map((u) => {
+                const birthdayToday = isBirthdayCalendarToday(u.dateOfBirth);
+                return (
+                <tr
+                  key={u.id}
+                  className={`border-t border-slate-100 text-slate-700 hover:bg-slate-50/80 ${
+                    birthdayToday ? "bg-rose-50/90 ring-1 ring-inset ring-rose-300/70" : ""
+                  }`}
+                >
+                  <td className="px-4 py-3 font-medium text-slate-900">
+                    <span className="inline-flex items-center gap-2">
+                      {birthdayToday ? (
+                        <span
+                          className="inline-flex shrink-0 rounded-full bg-rose-600 p-1 text-white shadow-sm"
+                          title="Birthday today (calendar)"
+                          aria-label="Birthday today"
+                        >
+                          <Gift className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                        </span>
+                      ) : null}
+                      {u.fullName}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">{u.phoneNumber}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      <span>{formatBirthdayListColumn(u.dateOfBirth)}</span>
+                      {birthdayToday ? (
+                        <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          Today
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">{u.roles.join(", ")}</td>
                   <td className="px-4 py-3">{u.status}</td>
                   <td className="px-4 py-3">{u.title ?? "-"}</td>
@@ -256,10 +288,11 @@ export default function UserManagementPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
               {!pagedUsers.length ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -486,9 +519,11 @@ export default function UserManagementPage() {
         user={messageUser}
         template={waTemplate}
         onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
-        onWhatsappSent={() => {
+        onWhatsappSent={(info) => {
           setErr(null);
-          setOk("WhatsApp message sent.");
+          setOk(
+            `WhatsApp API accepted a message to ${info.toInternationalDisplay} (Meta requires digits only in the request, e.g. ${info.toInternationalDisplay.replace(/^\+/, "")} — that is correct). If the person did not receive it: the number must be on WhatsApp; for a new chat you may need an approved template or an open 24h session; in Development add the recipient under your Meta app’s test phone numbers.`
+          );
         }}
       />
     </div>
