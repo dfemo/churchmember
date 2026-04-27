@@ -49,6 +49,8 @@ export type MemberListItem = {
 
 export type UpdateMemberRequest = {
   fullName: string;
+  /** Digits only (E.164 without +) after client normalization, matching API storage */
+  phoneNumber: string;
   email: string | null;
   dateOfBirth: string | null;
   address: string | null;

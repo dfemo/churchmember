@@ -2,6 +2,7 @@
 
 import { api, getApiErrorMessage } from "@/lib/api";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
+import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import {
   DEFAULT_TEMPLATE,
   formatPhoneForWhatsapp,
@@ -21,9 +22,18 @@ function toDateInput(v: string | null | undefined) {
   return v ? v.slice(0, 10) : "";
 }
 
+/** Pre-fill edit field: E.164 digits as +…; leave Google placeholder strings as-is. */
+function displayPhoneForEdit(stored: string) {
+  if (!stored) return "";
+  if (stored.startsWith("G_")) return stored;
+  if (/^\d{8,15}$/.test(stored)) return `+${stored}`;
+  return stored;
+}
+
 function buildFormData(profile: MemberProfile): UpdateMemberRequest {
   return {
     fullName: profile.fullName,
+    phoneNumber: displayPhoneForEdit(profile.phoneNumber),
     email: profile.email ?? null,
     dateOfBirth: toDateInput(profile.dateOfBirth) || null,
     address: profile.address ?? null,
@@ -375,7 +385,14 @@ export default function UserManagementPage() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!selectedId) return;
-              update.mutate({ id: selectedId, body: form });
+              const opt = getE164OptionsFromEnv();
+              const e164 = toE164Digits(form.phoneNumber, opt);
+              if (!e164.ok) {
+                setErr(e164.error);
+                setOk(null);
+                return;
+              }
+              update.mutate({ id: selectedId, body: { ...form, phoneNumber: e164.digits } });
             }}
           >
             {err ? <p className="md:col-span-2 text-sm text-rose-700">{err}</p> : null}
@@ -395,6 +412,23 @@ export default function UserManagementPage() {
                 value={form.email ?? ""}
                 onChange={(e) => setForm((f) => (f ? { ...f, email: e.target.value || null } : f))}
               />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-slate-600">Mobile (international)</label>
+              <input
+                type="tel"
+                autoComplete="tel"
+                placeholder="e.g. +234 803 123 4567"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
+                value={form.phoneNumber}
+                onChange={(e) => setForm((f) => (f ? { ...f, phoneNumber: e.target.value } : f))}
+              />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                Use country code with <span className="font-medium">+</span>. The value is stored as E.164 digits
+                (same as sign-in and WhatsApp). Replace any Google sign-in placeholder (
+                <code className="rounded bg-slate-100 px-0.5">G_…</code>) with a full international number to enable
+                SMS-style flows.
+              </p>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Date of birth</label>
