@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
 import Link from "next/link";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
@@ -58,6 +59,8 @@ function buildIso(m: string, d: string, y: string): string | null {
 }
 
 export default function MembershipDetailsPage() {
+  const { user } = useAuth();
+  const isAdmin = Boolean(user?.roles?.includes("Admin"));
   const queryClient = useQueryClient();
   const [form, setForm] = useState<{
     fullName: string;
@@ -81,6 +84,7 @@ export default function MembershipDetailsPage() {
     queryKey: ["profile-field-options-bundle"],
     queryFn: async () => (await api.get<ProfileFieldOptionsBundle>("/api/profile-field-options")).data,
     staleTime: 60_000,
+    enabled: isAdmin,
   });
 
   useEffect(() => {
@@ -148,8 +152,12 @@ export default function MembershipDetailsPage() {
   return (
     <div className="max-w-4xl rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur-xl">
       <h1 className="text-xl font-semibold text-slate-900">View membership details</h1>
-      <p className="mt-1 text-sm text-slate-500">Update your name, email, address, date of birth, title, and position.</p>
-      {optionsQ.isError ? (
+      <p className="mt-1 text-sm text-slate-500">
+        {isAdmin
+          ? "Update your name, email, address, date of birth, title, and position."
+          : "Update your name, email, address, and date of birth. Title and position are set by an administrator and shown below."}
+      </p>
+      {isAdmin && optionsQ.isError ? (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Could not load title/position lists ({getApiErrorMessage(optionsQ.error)}). You can still edit other fields;
           title and position choices may be incomplete.
@@ -187,8 +195,12 @@ export default function MembershipDetailsPage() {
             return;
           }
 
-          const title = form.title.trim() || null;
-          const position = form.position.trim() || null;
+          const title = isAdmin
+            ? form.title.trim() || null
+            : (profile.title?.trim() || null);
+          const position = isAdmin
+            ? form.position.trim() || null
+            : (profile.position?.trim() || null);
 
           mutation.mutate({
             fullName: form.fullName.trim(),
@@ -231,7 +243,7 @@ export default function MembershipDetailsPage() {
             />
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700">
               Email
@@ -247,10 +259,6 @@ export default function MembershipDetailsPage() {
           <div>
             <fieldset>
               <legend className="text-sm font-medium text-slate-700">Date of birth</legend>
-              <p className="mb-2 text-xs text-slate-500">
-                Month and day are required unless you pick a year from the list (then we store 1 January for that year).
-                Year otherwise defaults to {DEFAULT_BIRTH_YEAR}.
-              </p>
               <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div>
                   <label htmlFor="dobMonth" className="sr-only">
@@ -333,6 +341,10 @@ export default function MembershipDetailsPage() {
                   </select>
                 </div>
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                Month and day are required unless you pick a year from the list (then we store 1 January for that
+                year). Year otherwise defaults to {DEFAULT_BIRTH_YEAR}.
+              </p>
             </fieldset>
           </div>
         </div>
@@ -348,51 +360,68 @@ export default function MembershipDetailsPage() {
             className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:bg-white focus:outline-none"
           />
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700">
-              Title
-            </label>
-            <select
-              id="title"
-              value={form.title}
-              onChange={(e) => setForm((f) => (f ? { ...f, title: e.target.value } : f))}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
-            >
-              <option value="">None</option>
-              {titleChoices.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-slate-500">
-              Admins maintain this list under{" "}
-              <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
-                Title &amp; position lists
-              </Link>
-              .
-            </p>
+        {isAdmin ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-slate-700">
+                Title
+              </label>
+              <select
+                id="title"
+                value={form.title}
+                onChange={(e) => setForm((f) => (f ? { ...f, title: e.target.value } : f))}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
+              >
+                <option value="">None</option>
+                {titleChoices.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                Admins maintain this list under{" "}
+                <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
+                  Title &amp; position lists
+                </Link>
+                .
+              </p>
+            </div>
+            <div>
+              <label htmlFor="position" className="block text-sm font-medium text-slate-700">
+                Position
+              </label>
+              <select
+                id="position"
+                value={form.position}
+                onChange={(e) => setForm((f) => (f ? { ...f, position: e.target.value } : f))}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
+              >
+                <option value="">None</option>
+                {positionChoices.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label htmlFor="position" className="block text-sm font-medium text-slate-700">
-              Position
-            </label>
-            <select
-              id="position"
-              value={form.position}
-              onChange={(e) => setForm((f) => (f ? { ...f, position: e.target.value } : f))}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
-            >
-              <option value="">None</option>
-              {positionChoices.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <span className="block text-sm font-medium text-slate-700">Title</span>
+              <p className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-800">
+                {profile.title?.trim() ? profile.title : "—"}
+              </p>
+            </div>
+            <div>
+              <span className="block text-sm font-medium text-slate-700">Position</span>
+              <p className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-800">
+                {profile.position?.trim() ? profile.position : "—"}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <button
           type="submit"
           disabled={mutation.isPending}
