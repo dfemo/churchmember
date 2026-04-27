@@ -83,3 +83,13 @@ export function openWhatsappToPhone(phoneDigits: string, text: string): void {
   const url = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
+
+/**
+ * Opens the system SMS composer on phones/tablets (mailto-style). `phoneDigits` = E.164 without +.
+ * On many desktops nothing happens; use a phone or SMS gateway for bulk sends.
+ */
+export function openSmsToPhone(phoneDigits: string, text: string): void {
+  if (typeof window === "undefined") return;
+  const url = `sms:${phoneDigits}?body=${encodeURIComponent(text)}`;
+  window.open(url, "_self", "noopener,noreferrer");
+}

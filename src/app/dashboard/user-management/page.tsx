@@ -13,9 +13,10 @@ import {
 } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile, UpdateMemberRequest } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
+import { SendMessageDialog } from "@/components/user-management/send-message-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 function toDateInput(v: string | null | undefined) {
@@ -56,6 +57,7 @@ export default function UserManagementPage() {
   const [form, setForm] = useState<UpdateMemberRequest | null>(null);
   const [waTemplate, setWaTemplate] = useState(DEFAULT_TEMPLATE);
   const [waNote, setWaNote] = useState<string | null>(null);
+  const [messageUser, setMessageUser] = useState<MemberListItem | MemberProfile | null>(null);
 
   const users = useQuery({
     queryKey: ["members-list"],
@@ -181,7 +183,7 @@ export default function UserManagementPage() {
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">User management</h1>
         <p className="mt-1 text-sm text-slate-500">
-          View all users and edit profile, role, status, title, and position.{" "}
+          View all users and edit profile (including international phone), role, status, title, and position.{" "}
           <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
             Configure title &amp; position lists
           </Link>
@@ -190,10 +192,11 @@ export default function UserManagementPage() {
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">WhatsApp message</h2>
+        <h2 className="text-sm font-semibold text-slate-900">Message template (WhatsApp / SMS)</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Compose one template; each row&rsquo;s <span className="font-medium">WhatsApp</span> button opens a chat
-          to that person with placeholders filled. Saved in this browser.
+          Compose a template; use <span className="font-medium">Message</span> on a row to edit the text, then
+          open WhatsApp or SMS. <span className="font-medium">WhatsApp</span> sends the template in one step.
+          Saved in this browser.
         </p>
         <p className="mt-1 text-[11px] text-slate-400">
           Placeholders:{" "}
@@ -290,6 +293,15 @@ export default function UserManagementPage() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => setMessageUser(u)}
+                        className="inline-flex items-center gap-1 rounded-md border border-cyan-600/80 bg-cyan-50/90 px-2.5 py-1.5 text-xs font-medium text-cyan-950 hover:bg-cyan-100"
+                        title="Compose a message, then open WhatsApp or your SMS app"
+                      >
+                        <Send className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                        Message
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => openWhatsappForListUser(u)}
                         className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
                         title="Open WhatsApp Web or app with a personalized message"
@@ -349,9 +361,20 @@ export default function UserManagementPage() {
         <div className="mb-4 flex items-center justify-between gap-2">
           <div>
             <p className="text-base font-semibold text-slate-900">Edit user</p>
-            <p className="text-xs text-slate-500">Update user information, role, status, title, and position.</p>
+            <p className="text-xs text-slate-500">Update user information, phone (E.164), role, status, title, and position.</p>
           </div>
           <div className="flex flex-shrink-0 items-center gap-1.5">
+            {selected.data ? (
+              <button
+                type="button"
+                onClick={() => setMessageUser(selected.data!)}
+                className="inline-flex items-center gap-1 rounded-md border border-cyan-600/80 bg-cyan-50/90 px-2.5 py-1.5 text-xs font-medium text-cyan-950 hover:bg-cyan-100"
+                title="Compose, then open WhatsApp or SMS"
+              >
+                <Send className="h-3.5 w-3.5" strokeWidth={2} />
+                Message
+              </button>
+            ) : null}
             {selected.data ? (
               <button
                 type="button"
@@ -523,6 +546,15 @@ export default function UserManagementPage() {
           </form>
         ) : null}
       </aside>
+
+      <SendMessageDialog
+        open={messageUser !== null}
+        onClose={() => setMessageUser(null)}
+        user={messageUser}
+        template={waTemplate}
+        waOptions={waOptions}
+        onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
+      />
     </div>
   );
 }
