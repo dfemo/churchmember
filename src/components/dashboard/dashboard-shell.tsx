@@ -10,6 +10,7 @@ type MenuItem = {
   label: string;
   icon: ReactNode;
   badge?: string;
+  indent?: boolean;
 };
 
 function NavItem({
@@ -30,7 +31,7 @@ function NavItem({
       onClick={onNavigate}
       className={`flex items-center rounded-xl px-3 py-2.5 text-sm transition ${
         active ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-      }`}
+      } ${item.indent && !collapsed ? "ml-4" : ""}`}
     >
       <span
         aria-hidden
@@ -88,42 +89,44 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       icon: <span className="text-[11px] font-semibold">DB</span>,
     },
     {
-      href: "/dashboard/password",
+      href: "/dashboard/payment",
       label: "Payment",
       icon: <span className="text-[11px] font-semibold">$</span>,
     },
     {
-      href: "/dashboard/membership",
+      href: "/dashboard/members",
       label: "Members",
       icon: <span className="text-[11px] font-semibold">MB</span>,
+    },
+    {
+      href: "/dashboard/reports",
+      label: "Reports",
+      icon: <span className="text-[11px] font-semibold">RP</span>,
     },
   ];
   const reportItems: MenuItem[] = [
     {
-      href: "/dashboard/admin",
-      label: "Reports",
-      icon: <span className="text-[11px] font-semibold">RP</span>,
-    },
-    {
-      href: "/dashboard/member",
+      href: "/dashboard/attendant",
       label: "Attendant",
       icon: <span className="text-[11px] font-semibold">AT</span>,
+      indent: true,
     },
     {
-      href: "/dashboard/membership",
+      href: "/dashboard/messages",
       label: "Messages",
       icon: <span className="text-[11px] font-semibold">MS</span>,
       badge: "8",
+      indent: true,
     },
   ];
   const secondaryItems: MenuItem[] = [
     {
-      href: "/dashboard/password",
+      href: "/dashboard/settings",
       label: "Settings",
       icon: <span className="text-[11px] font-semibold">ST</span>,
     },
     {
-      href: "/dashboard/member",
+      href: "/dashboard/help",
       label: "Help",
       icon: <span className="text-[11px] font-semibold">?</span>,
     },
