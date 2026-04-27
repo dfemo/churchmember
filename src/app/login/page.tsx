@@ -92,7 +92,8 @@ export default function LoginPage() {
       <div className="mb-6 text-left">
         <h2 className="text-xl font-bold text-slate-900">Sign in</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-          Use your mobile number and password, or continue with Google.
+          Use your country code in international format (E.164), then your password, or continue with
+          Google.
         </p>
       </div>
 
@@ -113,10 +114,11 @@ export default function LoginPage() {
 
         <AuthTextField
           id="phone"
-          label="Mobile number"
+          label="Mobile number (international)"
           type="tel"
           autoComplete="username"
-          inputMode="numeric"
+          placeholder="e.g. +234 803 123 4567"
+          hint="Include country code with +. Stored as digits only, same as for WhatsApp links."
           value={phone}
           onChange={setPhone}
           required

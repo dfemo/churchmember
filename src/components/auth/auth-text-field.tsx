@@ -6,6 +6,8 @@ type Props = {
   type?: string;
   autoComplete?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  placeholder?: string;
+  hint?: string;
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
@@ -58,6 +60,8 @@ export function AuthTextField({
   type = "text",
   autoComplete,
   inputMode,
+  placeholder,
+  hint,
   value,
   onChange,
   required,
@@ -78,12 +82,19 @@ export function AuthTextField({
           type={type}
           autoComplete={autoComplete}
           inputMode={inputMode}
+          placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-transparent text-[15px] text-slate-900 outline-none placeholder:text-slate-400"
           required={required}
+          aria-describedby={hint ? `${id}-hint` : undefined}
         />
       </div>
+      {hint ? (
+        <p id={`${id}-hint`} className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

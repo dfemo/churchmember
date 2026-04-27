@@ -10,6 +10,7 @@ import {
 } from "react";
 import { api, getApiErrorMessage, setApiAuthToken } from "@/lib/api";
 import { clearStoredToken, getStoredToken, setStoredToken } from "@/lib/auth-storage";
+import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import type { AuthResult, MemberProfile, UserSummary } from "@/types/member";
 
 type RegisterPayload = {
@@ -109,8 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (phoneNumber: string, password: string) => {
       setError(null);
       try {
+        const trimmed = phoneNumber.trim();
+        const e164 = toE164Digits(trimmed, getE164OptionsFromEnv());
+        const phoneForApi = e164.ok ? e164.digits : trimmed;
         const { data } = await api.post<AuthResult>("/api/auth/login", {
-          phoneNumber: phoneNumber.trim(),
+          phoneNumber: phoneForApi,
           password,
         });
         applyAuthResult(data);
@@ -127,9 +131,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (payload: RegisterPayload) => {
       setError(null);
       try {
+        const e164 = toE164Digits(
+          payload.phoneNumber,
+          getE164OptionsFromEnv()
+        );
+        if (!e164.ok) throw new Error(e164.error);
         const { data } = await api.post<AuthResult>("/api/auth/register", {
           fullName: payload.fullName.trim(),
-          phoneNumber: payload.phoneNumber.trim(),
+          phoneNumber: e164.digits,
           password: payload.password,
           email: payload.email?.trim() || null,
         });

@@ -4,6 +4,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthTextField } from "@/components/auth/auth-text-field";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useAuth } from "@/contexts/auth-context";
+import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -50,6 +51,11 @@ export default function RegisterPage() {
     }
     if (!phone.trim() || !password) {
       setLocalError("Enter your mobile number and a password.");
+      return;
+    }
+    const e164 = toE164Digits(phone, getE164OptionsFromEnv());
+    if (!e164.ok) {
+      setLocalError(e164.error);
       return;
     }
     if (password.length < 8) {
@@ -115,7 +121,8 @@ export default function RegisterPage() {
       <div className="mb-5 text-left">
         <h2 className="text-xl font-bold text-slate-900">Register</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-          Continue with Google, or register with your mobile number and password.
+          Continue with Google, or register with a mobile in international format (E.164) and a
+          password.
         </p>
       </div>
 
@@ -164,10 +171,11 @@ export default function RegisterPage() {
         />
         <AuthTextField
           id="registerPhone"
-          label="Mobile number"
+          label="Mobile number (international)"
           type="tel"
           autoComplete="tel"
-          inputMode="numeric"
+          placeholder="e.g. +234 803 123 4567"
+          hint="Include country code with +. The number is stored in digit-only E.164 form for sign-in and WhatsApp."
           value={phone}
           onChange={setPhone}
           required

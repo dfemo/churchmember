@@ -1,3 +1,4 @@
+import { toE164Digits } from "@/lib/phone-e164";
 import type { MemberListItem, MemberProfile } from "@/types/member";
 
 const STORAGE_KEY = "cm_whatsapp_message_template";
@@ -15,52 +16,23 @@ export function setStoredWhatsappTemplate(v: string): void {
 }
 
 export type WhatsappFormatOptions = {
-  /** Digits for `00` local-legacy: national number starts with 0, e.g. 0803… → 234 + 803… */
   defaultCountryForLeadingZero?: string;
-  /**
-   * 10 digits, first 2-9: prepend `1` (US/Canada NANP). **Opt in only** — default false, because 10-digit numbers can be national numbers in other countries.
-   * @default false
-   */
   prependOneFor10DigitNanp?: boolean;
+  /** When set, "0…" is not converted. Usually inferred from `defaultCountryForLeadingZero` when used from user-management. */
+  disableLeadingZero?: boolean;
 };
 
 /**
- * Digits for `https://wa.me/{digits}` (no +, no spaces).
- *
- * - **Any country in full international form (recommended)**: e.g. `+234 803 123 4567`, `+44 7700 900123`,
- *   `+1 202 555 1234` → we keep digits: `234803...`, `447700...`, `1202555...` so Nigeria, UK, and US all work
- *   from the same list.
- * - **`00` prefix** (common outside North America) is removed once, then the rest is used as the full international number.
- * - **10 digits, first digit 2-9 (no leading 0)**: if {@link WhatsappFormatOptions.prependOneFor10DigitNanp} is
- *   `true`, a leading **1** is added (US/Canada NANP only; opt in, default off).
- * - **Local numbers starting with `0`** (e.g. `0803…` or `07000…` UK): that format is **country-specific**.
- *   We only convert when `defaultCountryForLeadingZero` is set (e.g. `234` for Nigeria). For **UK 07…**, do **not**
- *   use local `0` — store **`+44…` / full international** in the profile instead, so the first branch matches.
+ * Digits for `https://wa.me/{digits}` (shared rules with `lib/phone-e164.ts`).
  */
 export function formatPhoneForWhatsapp(phone: string, options: WhatsappFormatOptions = {}): string | null {
-  const { defaultCountryForLeadingZero, prependOneFor10DigitNanp = false } = options;
-  if (!phone?.trim()) return null;
-  let d = phone.replace(/\D/g, "");
-  if (!d) return null;
-  if (d.startsWith("00") && d.length > 2) d = d.slice(2);
-
-  // Full international: already has country code (2–4 digits) + national, no leading 0.
-  if (!d.startsWith("0")) {
-    if (d.length === 10 && prependOneFor10DigitNanp) {
-      const a = d[0];
-      if (a >= "2" && a <= "9") d = `1${d}`;
-    }
-    if (d.length >= 8 && d.length <= 15) return d;
-    return null;
-  }
-
-  // Leading 0 = local; must match ONE country. Only use for legacy (e.g. 0803… with default 234). Not for mixed UK+NG+US in one list unless everyone uses E.164 except one country.
-  const cc = (defaultCountryForLeadingZero ?? "").replace(/\D/g, "");
-  if (cc && d.length >= 10 && d.length <= 14) {
-    return cc + d.slice(1);
-  }
-
-  return null;
+  const { defaultCountryForLeadingZero, prependOneFor10DigitNanp = false, disableLeadingZero } = options;
+  const r = toE164Digits(phone, {
+    defaultCountryForLeadingZero,
+    prependOneFor10DigitNanp,
+    disableLeadingZero: disableLeadingZero ?? !defaultCountryForLeadingZero,
+  });
+  return r.ok ? r.digits : null;
 }
 
 function placeholderMap(u: MemberListItem | MemberProfile) {
