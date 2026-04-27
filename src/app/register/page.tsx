@@ -92,6 +92,9 @@ export default function RegisterPage() {
   }
 
   const showError = localError ?? error;
+  const isDuplicateRegistrationError = Boolean(
+    showError && /already registered|already in use|already exists/i.test(showError)
+  );
 
   return (
     <AuthShell
@@ -122,6 +125,18 @@ export default function RegisterPage() {
       <AuthDivider />
 
       <form onSubmit={onSubmit} className="space-y-3">
+        {isDuplicateRegistrationError ? (
+          <div
+            className="border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900"
+            role="alert"
+            aria-live="assertive"
+          >
+            <p className="font-semibold">Registration failed (duplicate account).</p>
+            <p className="mt-1">
+              This phone number or email is already registered. Use a different one, or go to Sign in.
+            </p>
+          </div>
+        ) : null}
         {showError ? (
           <p
             className="border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-900"

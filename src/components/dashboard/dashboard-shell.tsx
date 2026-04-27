@@ -79,6 +79,7 @@ function MenuSection({
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { user, logout, lastLoginAt } = useAuth();
   const router = useRouter();
+  const isAdmin = Boolean(user?.roles?.includes("Admin"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -131,6 +132,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       icon: <span className="text-[11px] font-semibold">?</span>,
     },
   ];
+  const adminItems: MenuItem[] = isAdmin
+    ? [
+        {
+          href: "/dashboard/user-management",
+          label: "User management",
+          icon: <span className="text-[11px] font-semibold">UM</span>,
+        },
+      ]
+    : [];
 
   function signOut() {
     logout();
@@ -161,6 +171,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="space-y-5">
             <MenuSection title="General" items={primaryItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
             <MenuSection title="Reports" items={reportItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
+            {adminItems.length ? (
+              <MenuSection title="Admin" items={adminItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
+            ) : null}
           </div>
           <div className="mt-6 border-t border-slate-200 pt-4">
             <MenuSection
@@ -187,6 +200,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="space-y-5">
             <MenuSection title="General" items={primaryItems} collapsed={sidebarCollapsed} />
             <MenuSection title="Reports" items={reportItems} collapsed={sidebarCollapsed} />
+            {adminItems.length ? <MenuSection title="Admin" items={adminItems} collapsed={sidebarCollapsed} /> : null}
           </div>
           <div className="mt-6 border-t border-slate-200 pt-4">
             <MenuSection title="Support" items={secondaryItems} collapsed={sidebarCollapsed} />

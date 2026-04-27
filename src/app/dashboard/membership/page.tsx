@@ -17,6 +17,8 @@ export default function MembershipDetailsPage() {
     email: string;
     address: string;
     dateOfBirth: string;
+    title: string;
+    position: string;
   } | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -32,6 +34,8 @@ export default function MembershipDetailsPage() {
       email: q.data.email ?? "",
       address: q.data.address ?? "",
       dateOfBirth: isoToDateInput(q.data.dateOfBirth),
+      title: q.data.title ?? "",
+      position: q.data.position ?? "",
     });
   }, [q.data]);
 
@@ -64,6 +68,8 @@ export default function MembershipDetailsPage() {
             email: form.email.trim() || null,
             dateOfBirth: form.dateOfBirth || null,
             address: form.address.trim() || null,
+            title: form.title.trim() || null,
+            position: form.position.trim() || null,
           });
         }}
       >
@@ -135,6 +141,30 @@ export default function MembershipDetailsPage() {
             onChange={(e) => setForm((f) => (f ? { ...f, address: e.target.value } : f))}
             className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:bg-white focus:outline-none"
           />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700">
+              Title
+            </label>
+            <input
+              id="title"
+              value={form.title}
+              onChange={(e) => setForm((f) => (f ? { ...f, title: e.target.value } : f))}
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:bg-white focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="position" className="block text-sm font-medium text-slate-700">
+              Position
+            </label>
+            <input
+              id="position"
+              value={form.position}
+              onChange={(e) => setForm((f) => (f ? { ...f, position: e.target.value } : f))}
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:bg-white focus:outline-none"
+            />
+          </div>
         </div>
         <button
           type="submit"
