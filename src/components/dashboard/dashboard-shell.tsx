@@ -1,6 +1,25 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import type { LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  ClipboardList,
+  CreditCard,
+  HelpCircle,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  PanelLeft,
+  Search,
+  Settings,
+  Tags,
+  UserCircle,
+  UserCog,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -8,9 +27,9 @@ import { useState, type ReactNode } from "react";
 type MenuItem = {
   href: string;
   label: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   badge?: string;
-  indent?: boolean;
+  sub?: boolean;
 };
 
 function NavItem({
@@ -24,55 +43,196 @@ function NavItem({
 }) {
   const pathname = usePathname();
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const Icon = item.icon;
   return (
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
       onClick={onNavigate}
-      className={`flex items-center rounded-xl px-3 py-2.5 text-sm transition ${
-        active ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-      } ${item.indent && !collapsed ? "ml-4" : ""}`}
+      className={[
+        "group flex items-center gap-3 rounded-lg py-2 text-[13px] font-medium transition-colors",
+        collapsed ? "justify-center px-0" : "px-3",
+        item.sub && !collapsed ? "pl-9" : "",
+        active
+          ? "bg-white/[0.12] text-white shadow-[inset_3px_0_0_#34d399]"
+          : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200",
+      ].join(" ")}
     >
       <span
-        aria-hidden
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${
-          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-        }`}
+        className={[
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-colors",
+          active
+            ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-200"
+            : "bg-zinc-800/60 text-zinc-500 group-hover:text-zinc-300",
+        ].join(" ")}
       >
-        {item.icon}
+        <Icon className="h-4 w-4" strokeWidth={1.5} />
       </span>
-      {!collapsed ? <span className="ml-2.5">{item.label}</span> : null}
-      {!collapsed && item.badge ? (
-        <span className="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-          {item.badge}
-        </span>
+      {!collapsed ? (
+        <>
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          {item.badge ? (
+            <span className="rounded-md bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200/90">
+              {item.badge}
+            </span>
+          ) : null}
+        </>
       ) : null}
     </Link>
   );
 }
 
-function MenuSection({
+function NavSection({
+  id,
   title,
   items,
   collapsed,
   onNavigate,
 }: {
+  id: string;
   title: string;
   items: MenuItem[];
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
   return (
-    <section>
+    <section className="space-y-1" aria-labelledby={id}>
       {!collapsed ? (
-        <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
+        <h2
+          id={id}
+          className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 first:pt-0"
+        >
+          {title}
+        </h2>
       ) : null}
-      <nav className="space-y-1">
+      <nav className="space-y-0.5" aria-label={title}>
         {items.map((item) => (
           <NavItem key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </nav>
     </section>
+  );
+}
+
+function SidebarContent({
+  collapsed,
+  isAdmin,
+  onNavigate,
+  onToggleCollapse,
+}: {
+  collapsed: boolean;
+  isAdmin: boolean;
+  onNavigate?: () => void;
+  onToggleCollapse: () => void;
+}) {
+  const overview: MenuItem[] = [
+    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  ];
+  const operations: MenuItem[] = [
+    { href: "/dashboard/payment", label: "Payment", icon: CreditCard },
+    { href: "/dashboard/members", label: "Members", icon: Users },
+    { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
+  ];
+  const activity: MenuItem[] = [
+    { href: "/dashboard/attendant", label: "Attendance", icon: ClipboardList, sub: true },
+    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare, sub: true, badge: "8" },
+  ];
+  const myAccount: MenuItem[] = [
+    { href: "/dashboard/membership", label: "My profile", icon: UserCircle },
+    { href: "/dashboard/password", label: "Sign-in & security", icon: KeyRound },
+  ];
+  const admin: MenuItem[] = isAdmin
+    ? [
+        { href: "/dashboard/user-management", label: "User management", icon: UserCog },
+        { href: "/dashboard/profile-field-options", label: "Title & position lists", icon: Tags },
+      ]
+    : [];
+  const system: MenuItem[] = [
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
+    { href: "/dashboard/help", label: "Help", icon: HelpCircle },
+  ];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div
+        className={[
+          "mb-4 flex items-center gap-3 border-b border-zinc-800/80 px-1 pb-5",
+          collapsed ? "flex-col" : "",
+        ].join(" ")}
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400/90 to-teal-600 text-sm font-bold tracking-tight text-zinc-950">
+          CM
+        </div>
+        {!collapsed ? (
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold tracking-tight text-white">Church Members</p>
+            <p className="text-xs text-zinc-500">Member & admin portal</p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <NavSection
+          id="nav-overview"
+          title="Overview"
+          items={overview}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+        <NavSection
+          id="nav-ops"
+          title="Operations"
+          items={operations}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+        <NavSection
+          id="nav-activity"
+          title="Activity"
+          items={activity}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+        <NavSection
+          id="nav-account"
+          title="My account"
+          items={myAccount}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+        {admin.length > 0 ? (
+          <NavSection
+            id="nav-admin"
+            title="Administration"
+            items={admin}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        ) : null}
+        <NavSection
+          id="nav-system"
+          title="System"
+          items={system}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+      </div>
+
+      <div className="mt-auto border-t border-zinc-800/80 pt-3">
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <PanelLeft
+            className={["h-4 w-4 transition-transform", collapsed ? "rotate-180" : ""].join(" ")}
+            strokeWidth={1.5}
+          />
+          {!collapsed ? <span>Collapse</span> : null}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -83,205 +243,127 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const primaryItems: MenuItem[] = [
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: <span className="text-[11px] font-semibold">DB</span>,
-    },
-    {
-      href: "/dashboard/payment",
-      label: "Payment",
-      icon: <span className="text-[11px] font-semibold">$</span>,
-    },
-    {
-      href: "/dashboard/members",
-      label: "Members",
-      icon: <span className="text-[11px] font-semibold">MB</span>,
-    },
-    {
-      href: "/dashboard/reports",
-      label: "Reports",
-      icon: <span className="text-[11px] font-semibold">RP</span>,
-    },
-  ];
-  const reportItems: MenuItem[] = [
-    {
-      href: "/dashboard/attendant",
-      label: "Attendant",
-      icon: <span className="text-[11px] font-semibold">AT</span>,
-      indent: true,
-    },
-    {
-      href: "/dashboard/messages",
-      label: "Messages",
-      icon: <span className="text-[11px] font-semibold">MS</span>,
-      badge: "8",
-      indent: true,
-    },
-  ];
-  const secondaryItems: MenuItem[] = [
-    {
-      href: "/dashboard/settings",
-      label: "Settings",
-      icon: <span className="text-[11px] font-semibold">ST</span>,
-    },
-    {
-      href: "/dashboard/help",
-      label: "Help",
-      icon: <span className="text-[11px] font-semibold">?</span>,
-    },
-  ];
-  const adminItems: MenuItem[] = isAdmin
-    ? [
-        {
-          href: "/dashboard/user-management",
-          label: "User management",
-          icon: <span className="text-[11px] font-semibold">UM</span>,
-        },
-      ]
-    : [];
-
   function signOut() {
     logout();
     router.push("/login");
   }
 
-  const sidebarBase =
-    "shrink-0 border-r border-slate-200/80 bg-white/70 p-4 backdrop-blur-xl transition-all duration-200";
+  const sidebarW = sidebarCollapsed ? "w-[4.5rem]" : "w-64";
 
   return (
-    <div className="min-h-svh bg-[#eef1f5] p-3 md:p-5">
-      <div className="mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-[1400px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 shadow-[0_20px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl md:min-h-[calc(100svh-2.5rem)]">
-        {mobileOpen ? (
-          <button
-            type="button"
-            aria-label="Close navigation"
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-30 bg-slate-900/35 lg:hidden"
+    <div className="flex h-svh w-full flex-col overflow-hidden bg-zinc-100 text-zinc-900 antialiased md:flex-row">
+      {mobileOpen ? (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-zinc-950/60 backdrop-blur-[2px] lg:hidden"
+        />
+      ) : null}
+
+      <aside
+        className={[
+          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/80 bg-zinc-950 p-4 shadow-2xl shadow-zinc-950/40",
+          "lg:static lg:z-0 lg:shrink-0 lg:shadow-none",
+          "transition-[width] duration-200 ease-out",
+          sidebarW,
+          mobileOpen ? "flex" : "hidden",
+          "lg:flex",
+        ].join(" ")}
+      >
+        <div className="h-full w-full min-w-0">
+          <SidebarContent
+            collapsed={sidebarCollapsed}
+            isAdmin={isAdmin}
+            onNavigate={() => setMobileOpen(false)}
+            onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           />
-        ) : null}
+        </div>
+      </aside>
 
-        <aside
-          className={`fixed inset-y-0 left-0 z-40 w-72 translate-x-0 ${sidebarBase} ${
-            mobileOpen ? "block" : "hidden"
-          } lg:hidden`}
-        >
-          <p className="px-2 py-3 text-base font-semibold text-slate-900">Church Members</p>
-          <div className="space-y-5">
-            <MenuSection title="General" items={primaryItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
-            <MenuSection title="Reports" items={reportItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
-            {adminItems.length ? (
-              <MenuSection title="Admin" items={adminItems} collapsed={false} onNavigate={() => setMobileOpen(false)} />
-            ) : null}
-          </div>
-          <div className="mt-6 border-t border-slate-200 pt-4">
-            <MenuSection
-              title="Support"
-              items={secondaryItems}
-              collapsed={false}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          </div>
-        </aside>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="z-20 flex h-16 shrink-0 items-center border-b border-zinc-200/90 bg-white/90 px-4 shadow-sm shadow-zinc-900/[0.03] backdrop-blur-md sm:px-5 lg:px-8">
+          <div className="flex w-full min-w-0 items-center gap-3 lg:gap-4">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 lg:hidden"
+            >
+              Menu
+            </button>
+            <div className="hidden min-w-0 sm:block">
+              <p className="truncate text-sm font-semibold text-zinc-900">
+                {isAdmin ? "Admin workspace" : "Member workspace"}
+              </p>
+              <p className="truncate text-[11px] text-zinc-500">Welcome back—here is your summary</p>
+              <p className="truncate text-[10px] text-zinc-400" suppressHydrationWarning>
+                Last sign-in: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
+              </p>
+            </div>
 
-        <aside
-          className={`hidden ${sidebarBase} lg:block ${
-            sidebarCollapsed ? "w-20" : "w-72"
-          }`}
-        >
-          <p
-            className={`px-2 py-3 text-base font-semibold text-slate-900 ${
-              sidebarCollapsed ? "text-center text-xs" : ""
-            }`}
-          >
-            {sidebarCollapsed ? "CM" : "Church Members"}
-          </p>
-          <div className="space-y-5">
-            <MenuSection title="General" items={primaryItems} collapsed={sidebarCollapsed} />
-            <MenuSection title="Reports" items={reportItems} collapsed={sidebarCollapsed} />
-            {adminItems.length ? <MenuSection title="Admin" items={adminItems} collapsed={sidebarCollapsed} /> : null}
-          </div>
-          <div className="mt-6 border-t border-slate-200 pt-4">
-            <MenuSection title="Support" items={secondaryItems} collapsed={sidebarCollapsed} />
-          </div>
-        </aside>
+            <div className="mx-auto hidden w-full max-w-md md:block">
+              <label className="relative block">
+                <span className="sr-only">Search</span>
+                <Search
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                  strokeWidth={1.5}
+                />
+                <input
+                  type="search"
+                  placeholder="Search records, people, or reports…"
+                  className="h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50/80 pl-10 pr-3 text-sm text-zinc-800 shadow-inner shadow-zinc-900/[0.02] outline-none transition placeholder:text-zinc-400 focus:border-emerald-500/40 focus:bg-white focus:ring-2 focus:ring-emerald-500/15"
+                />
+              </label>
+            </div>
 
-        <div className="flex min-h-svh flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
+              <div className="hidden items-center gap-1.5 sm:flex">
                 <button
                   type="button"
-                  onClick={() => setMobileOpen(true)}
-                  className="inline-flex rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 lg:hidden"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
+                  aria-label="Notifications"
                 >
-                  Menu
+                  <Bell className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSidebarCollapsed((v) => !v)}
-                  className="hidden rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 lg:inline-flex"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
+                  aria-label="App settings"
                 >
-                  {sidebarCollapsed ? "Expand" : "Collapse"}
-                </button>
-                <div className="h-8 w-px bg-slate-200" />
-                <div className="hidden md:block">
-                  <p className="truncate text-sm font-semibold text-slate-900">
-                    {isAdmin ? "Admin workspace" : "Member workspace"}
-                  </p>
-                </div>
-                <div className="mx-auto hidden max-w-xl flex-1 px-3 md:block">
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2">
-                    <span className="mr-2 text-slate-400">⌕</span>
-                    <input
-                      type="search"
-                      placeholder="Search..."
-                      className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="hidden items-center gap-2 sm:flex">
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-600"
-                >
-                  🔔
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-600"
-                >
-                  ⚙
+                  <Settings className="h-4 w-4" strokeWidth={1.5} />
                 </button>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-semibold text-white">
+
+              <div className="flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/90 py-1 pl-1.5 pr-1.5 shadow-sm">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-700 text-xs font-semibold text-white">
                   {(user?.fullName ?? "U").charAt(0).toUpperCase()}
                 </span>
-                <div className="hidden min-w-0 md:block">
-                  <p className="truncate text-xs font-semibold text-slate-900">{user?.fullName ?? "User"}</p>
-                  <p className="truncate text-[11px] text-slate-500">{user?.roles?.join(", ") || "Member"}</p>
+                <div className="hidden min-w-0 leading-tight sm:block">
+                  <p className="truncate text-xs font-semibold text-zinc-900">{user?.fullName ?? "User"}</p>
+                  <p className="truncate text-[10px] text-zinc-500">{user?.roles?.join(", ") || "Member"}</p>
                 </div>
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded-md border border-slate-300 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium text-zinc-600 transition hover:bg-white hover:text-zinc-900"
                 >
-                  Logout
+                  <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <span className="hidden lg:inline">Log out</span>
                 </button>
               </div>
             </div>
-            <div className="mt-2 block md:hidden">
-              <p className="truncate text-xs text-slate-500">
-                Last login: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
-              </p>
-            </div>
-          </header>
+          </div>
+        </header>
 
-          <main className="flex-1 px-6 py-5">{children}</main>
+        <div className="border-b border-zinc-200/60 bg-zinc-50/80 px-4 py-1.5 text-center text-[11px] text-zinc-500 sm:px-8 sm:text-left md:hidden">
+          Last sign-in: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
         </div>
+
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,_#f4f4f5_0%,_#fafafa_32%,_#fafafa_100%)]">
+          <div className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

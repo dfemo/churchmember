@@ -1,12 +1,12 @@
 "use client";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import type { MemberListItem, MemberProfile, UpdateMemberRequest } from "@/types/member";
+import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-
-const TITLE_OPTIONS = ["Mr", "Mrs", "Chief", "Doctor"] as const;
-const POSITION_OPTIONS = ["Pastor", "Prophet", "Shepherd", "Sister", "Brother", "Reverend", "Apostle"] as const;
 
 function toDateInput(v: string | null | undefined) {
   return v ? v.slice(0, 10) : "";
@@ -39,6 +39,12 @@ export default function UserManagementPage() {
   const users = useQuery({
     queryKey: ["members-list"],
     queryFn: async () => (await api.get<MemberListItem[]>("/api/members")).data,
+  });
+
+  const bundleQ = useQuery({
+    queryKey: ["profile-field-options-bundle"],
+    queryFn: async () => (await api.get<ProfileFieldOptionsBundle>("/api/profile-field-options")).data,
+    staleTime: 60_000,
   });
 
   const selected = useQuery({
@@ -92,13 +98,28 @@ export default function UserManagementPage() {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
+  const titleChoices = useMemo(
+    () => mergePicklistWithCurrent(selected.data?.title, bundleQ.data?.titles ?? []),
+    [selected.data?.title, bundleQ.data?.titles]
+  );
+  const positionChoices = useMemo(
+    () => mergePicklistWithCurrent(selected.data?.position, bundleQ.data?.positions ?? []),
+    [selected.data?.position, bundleQ.data?.positions]
+  );
+
   if (users.isError) return <p className="text-sm text-rose-700">{getApiErrorMessage(users.error)}</p>;
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">User management</h1>
-        <p className="mt-1 text-sm text-slate-500">View all users and edit profile, role, status, title, and position.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          View all users and edit profile, role, status, title, and position.{" "}
+          <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
+            Configure title &amp; position lists
+          </Link>
+          .
+        </p>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm">
@@ -261,8 +282,8 @@ export default function UserManagementPage() {
                 value={form.title ?? ""}
                 onChange={(e) => setForm((f) => (f ? { ...f, title: e.target.value || null } : f))}
               >
-                <option value="">Select title</option>
-                {TITLE_OPTIONS.map((v) => (
+                <option value="">None</option>
+                {titleChoices.map((v) => (
                   <option key={v} value={v}>
                     {v}
                   </option>
@@ -276,8 +297,8 @@ export default function UserManagementPage() {
                 value={form.position ?? ""}
                 onChange={(e) => setForm((f) => (f ? { ...f, position: e.target.value || null } : f))}
               >
-                <option value="">Select position</option>
-                {POSITION_OPTIONS.map((v) => (
+                <option value="">None</option>
+                {positionChoices.map((v) => (
                   <option key={v} value={v}>
                     {v}
                   </option>
