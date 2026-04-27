@@ -3,20 +3,13 @@
 import { api, getApiErrorMessage } from "@/lib/api";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
-import {
-  DEFAULT_TEMPLATE,
-  formatPhoneForWhatsapp,
-  getStoredWhatsappTemplate,
-  openWhatsappToPhone,
-  personalizeWhatsappMessage,
-  setStoredWhatsappTemplate,
-} from "@/lib/whatsapp";
+import { DEFAULT_TEMPLATE, getStoredWhatsappTemplate, setStoredWhatsappTemplate } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile, UpdateMemberRequest } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { SendMessageDialog } from "@/components/user-management/send-message-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { MessageCircle, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 function toDateInput(v: string | null | undefined) {
@@ -56,7 +49,6 @@ export default function UserManagementPage() {
   const [ok, setOk] = useState<string | null>(null);
   const [form, setForm] = useState<UpdateMemberRequest | null>(null);
   const [waTemplate, setWaTemplate] = useState(DEFAULT_TEMPLATE);
-  const [waNote, setWaNote] = useState<string | null>(null);
   const [messageUser, setMessageUser] = useState<MemberListItem | MemberProfile | null>(null);
 
   const users = useQuery({
@@ -147,37 +139,6 @@ export default function UserManagementPage() {
     prependOneFor10DigitNanp: prepend1Us,
   } as const;
 
-  function openWhatsappForListUser(u: MemberListItem) {
-    setWaNote(null);
-    const phone = formatPhoneForWhatsapp(u.phoneNumber, waOptions);
-    if (!phone) {
-      setWaNote(
-        "Could not build a WhatsApp link. Use full international numbers with country code in the user profile, e.g. +234 803 123 4567, +44 7700 900123, +1 202 555 1234. " +
-          (applyLeadingZeroRule
-            ? `For one country you may also store local 0… numbers and set NEXT_PUBLIC_WHATSAPP_DEFAULT_COUNTRY (e.g. 234).`
-            : `Leading-zero local is disabled; use +country code.`)
-      );
-      return;
-    }
-    setStoredWhatsappTemplate(waTemplate);
-    const text = personalizeWhatsappMessage(waTemplate, u);
-    openWhatsappToPhone(phone, text);
-  }
-
-  function openWhatsappForProfile(p: MemberProfile) {
-    setWaNote(null);
-    const phone = formatPhoneForWhatsapp(p.phoneNumber, waOptions);
-    if (!phone) {
-      setWaNote(
-        "Could not build a WhatsApp link. Save the number with country code (+44…, +1…, +234…) or a supported local 0… format (see help below)."
-      );
-      return;
-    }
-    setStoredWhatsappTemplate(waTemplate);
-    const text = personalizeWhatsappMessage(waTemplate, p);
-    openWhatsappToPhone(phone, text);
-  }
-
   return (
     <div className="space-y-4">
       <div>
@@ -194,9 +155,11 @@ export default function UserManagementPage() {
       <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Message template (WhatsApp / SMS)</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Compose a template; use <span className="font-medium">Message</span> on a row to edit the text, then
-          open WhatsApp or SMS. <span className="font-medium">WhatsApp</span> sends the template in one step.
-          Saved in this browser.
+          Save a default template (placeholders below). Use <span className="font-medium">Message</span> to edit, then
+          <span className="font-medium"> Send as WhatsApp</span> (server sends via Meta WhatsApp Cloud API — set{" "}
+          <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud:AccessToken</code> and{" "}
+          <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud:PhoneNumberId</code> on the API) or{" "}
+          <span className="font-medium">Open SMS</span> on your device. Template text is saved in this browser.
         </p>
         <p className="mt-1 text-[11px] text-slate-400">
           Placeholders:{" "}
@@ -206,7 +169,6 @@ export default function UserManagementPage() {
           (<code className="rounded bg-slate-100 px-0.5">{"{{email}}"}</code> / <code className="rounded bg-slate-100 px-0.5">{"{{address}}"}</code>{" "}
           only in the edit drawer; empty in the table)
         </p>
-        {waNote ? <p className="mt-2 text-xs text-rose-600">{waNote}</p> : null}
         <label htmlFor="waTemplate" className="sr-only">
           Message template
         </label>
@@ -295,19 +257,10 @@ export default function UserManagementPage() {
                         type="button"
                         onClick={() => setMessageUser(u)}
                         className="inline-flex items-center gap-1 rounded-md border border-cyan-600/80 bg-cyan-50/90 px-2.5 py-1.5 text-xs font-medium text-cyan-950 hover:bg-cyan-100"
-                        title="Compose a message, then open WhatsApp or your SMS app"
+                        title="Compose, then send via WhatsApp (Cloud API) or open SMS on your device"
                       >
                         <Send className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                         Message
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openWhatsappForListUser(u)}
-                        className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
-                        title="Open WhatsApp Web or app with a personalized message"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                        WhatsApp
                       </button>
                     </div>
                   </td>
@@ -369,21 +322,10 @@ export default function UserManagementPage() {
                 type="button"
                 onClick={() => setMessageUser(selected.data!)}
                 className="inline-flex items-center gap-1 rounded-md border border-cyan-600/80 bg-cyan-50/90 px-2.5 py-1.5 text-xs font-medium text-cyan-950 hover:bg-cyan-100"
-                title="Compose, then open WhatsApp or SMS"
+                title="Compose, then send via WhatsApp (Cloud API) or SMS on your device"
               >
                 <Send className="h-3.5 w-3.5" strokeWidth={2} />
                 Message
-              </button>
-            ) : null}
-            {selected.data ? (
-              <button
-                type="button"
-                onClick={() => openWhatsappForProfile(selected.data!)}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
-                title="Uses the WhatsApp message template from the list above"
-              >
-                <MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />
-                WhatsApp
               </button>
             ) : null}
             <button
@@ -554,6 +496,10 @@ export default function UserManagementPage() {
         template={waTemplate}
         waOptions={waOptions}
         onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
+        onWhatsappSent={() => {
+          setErr(null);
+          setOk("WhatsApp message sent.");
+        }}
       />
     </div>
   );

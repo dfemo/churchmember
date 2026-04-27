@@ -1,6 +1,7 @@
 "use client";
 
-import { formatPhoneForWhatsapp, openSmsToPhone, openWhatsappToPhone, personalizeWhatsappMessage, type WhatsappFormatOptions } from "@/lib/whatsapp";
+import { api, getApiErrorMessage } from "@/lib/api";
+import { formatPhoneForWhatsapp, openSmsToPhone, personalizeWhatsappMessage, type WhatsappFormatOptions } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile } from "@/types/member";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -13,8 +14,9 @@ type SendMessageDialogProps = {
   user: Recipient | null;
   template: string;
   waOptions: WhatsappFormatOptions;
-  /** Called when sending, e.g. save the list template to localStorage (same as one-tap WhatsApp). */
+  /** When using Open SMS, keep template saved in the browser (same as before). */
   onPersistTemplate: () => void;
+  onWhatsappSent?: () => void;
 };
 
 export function SendMessageDialog({
@@ -24,14 +26,18 @@ export function SendMessageDialog({
   template,
   waOptions,
   onPersistTemplate,
+  onWhatsappSent,
 }: SendMessageDialogProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const [body, setBody] = useState("");
+  const [waSending, setWaSending] = useState(false);
+  const [waError, setWaError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && user) {
       setBody(personalizeWhatsappMessage(template, user));
+      setWaError(null);
     }
   }, [open, user, template]);
 
@@ -41,13 +47,26 @@ export function SendMessageDialog({
 
   const e164 = user ? formatPhoneForWhatsapp(user.phoneNumber, waOptions) : null;
   const canSend = Boolean(e164 && body.trim());
+  const waDisabled = !canSend || waSending;
 
-  const sendWhatsapp = useCallback(() => {
+  const sendWhatsapp = useCallback(async () => {
     if (!user || !e164 || !body.trim()) return;
-    onPersistTemplate();
-    openWhatsappToPhone(e164, body);
-    onClose();
-  }, [user, e164, body, onPersistTemplate, onClose]);
+    setWaError(null);
+    setWaSending(true);
+    try {
+      await api.post("/api/messages/whatsapp", {
+        toPhoneNumber: e164,
+        message: body,
+      });
+      onPersistTemplate();
+      onWhatsappSent?.();
+      onClose();
+    } catch (e) {
+      setWaError(getApiErrorMessage(e));
+    } finally {
+      setWaSending(false);
+    }
+  }, [user, e164, body, onPersistTemplate, onWhatsappSent, onClose]);
 
   const sendSms = useCallback(() => {
     if (!user || !e164 || !body.trim()) return;
@@ -98,16 +117,26 @@ export function SendMessageDialog({
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:px-5">
           {!e164 ? (
             <p className="text-sm text-amber-800">
-              This phone can&apos;t be used for links until it&apos;s a valid international number
-              (E.164) on the user&apos;s profile — e.g. with country code like +234, +1, or +44.
+              This phone can&apos;t be used until it&apos;s a valid international number (E.164) on the
+              user&apos;s profile — e.g. with country code like +234, +1, or +44.
             </p>
           ) : (
             <p className="text-xs text-slate-500">
-              WhatsApp opens a chat in the app or on the web. If that number is not on WhatsApp, the
-              app will show that it&apos;s not registered. SMS uses your device&apos;s text app
-              (works best on a phone; many desktops won&apos;t do anything).
+              <span className="font-medium text-slate-700">WhatsApp</span> is sent from the server
+              using the Meta WhatsApp Business Cloud API (configure{" "}
+              <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud</code> on the API). Free-form
+              text only works when Meta allows it (e.g. within 24h of the user messaging you, or
+              per your WABA policy).{" "}
+              <span className="font-medium text-slate-700">SMS</span> opens your device&apos;s text
+              app (phones only).
             </p>
           )}
+
+          {waError ? (
+            <p className="text-sm text-rose-700" role="alert">
+              {waError}
+            </p>
+          ) : null}
 
           <div>
             <label htmlFor="msg-body" className="block text-xs font-medium text-slate-600">
@@ -132,13 +161,14 @@ export function SendMessageDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            disabled={waSending}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="button"
-            disabled={!canSend}
+            disabled={!canSend || waSending}
             onClick={sendSms}
             className="rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -146,11 +176,11 @@ export function SendMessageDialog({
           </button>
           <button
             type="button"
-            disabled={!canSend}
-            onClick={sendWhatsapp}
+            disabled={waDisabled}
+            onClick={() => void sendWhatsapp()}
             className="rounded-lg border-2 border-emerald-600 bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:border-emerald-700 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Open WhatsApp
+            {waSending ? "Sending…" : "Send as WhatsApp"}
           </button>
         </div>
       </div>
