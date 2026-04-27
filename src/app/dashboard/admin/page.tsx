@@ -4,20 +4,52 @@ import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { DashboardStatsResponse } from "@/types/member";
 import { useQuery } from "@tanstack/react-query";
+import { Gift } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+const BIRTHDAY_ACK = "cm_birthday_highlight_ack";
+
+function localTodayIso(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
 
 export default function AdminDashboardPage() {
   const { user, lastLoginAt } = useAuth();
   const router = useRouter();
+  const [birthdayAcknowledgedToday, setBirthdayAcknowledgedToday] = useState<boolean | null>(null);
+
   useEffect(() => {
     if (user && !user.roles?.includes("Admin")) router.replace("/dashboard/member");
   }, [user, router]);
+
+  useEffect(() => {
+    try {
+      setBirthdayAcknowledgedToday(localStorage.getItem(BIRTHDAY_ACK) === localTodayIso());
+    } catch {
+      setBirthdayAcknowledgedToday(false);
+    }
+  }, []);
 
   const q = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => (await api.get<DashboardStatsResponse>("/api/dashboard/stats")).data,
   });
+
+  const todays = q.data?.todaysBirthdays ?? [];
+  const hasBirthdaysToday = todays.length > 0;
+  const showBirthdayBanner =
+    birthdayAcknowledgedToday !== null && hasBirthdaysToday && !birthdayAcknowledgedToday;
+
+  function acknowledgeBirthdayHighlight() {
+    try {
+      localStorage.setItem(BIRTHDAY_ACK, localTodayIso());
+    } catch {
+      /* private mode */
+    }
+    setBirthdayAcknowledgedToday(true);
+  }
 
   if (q.isError) {
     return <p className="text-sm text-rose-700">{getApiErrorMessage(q.error)}</p>;
@@ -27,8 +59,32 @@ export default function AdminDashboardPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">Elegant analytics overview for members, activity, and birthdays.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Elegant analytics overview for members, activity, and birthdays. Birthday matches use{" "}
+          <span className="font-medium text-slate-700">month and day</span> each year (year ignored).
+        </p>
       </div>
+
+      {showBirthdayBanner ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-start gap-3 rounded-2xl border-2 border-rose-400 bg-gradient-to-r from-rose-50 via-amber-50 to-violet-50 p-4 shadow-md"
+        >
+          <Gift className="mt-0.5 h-8 w-8 shrink-0 text-rose-600" strokeWidth={1.75} aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-900">Birthday highlight — due today</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-800">{todays.map((p) => p.fullName).join(", ")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={acknowledgeBirthdayHighlight}
+            className="shrink-0 rounded-lg border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            Acknowledge
+          </button>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100 p-5 shadow-sm">
           <p className="text-xs uppercase tracking-wider text-violet-600">Admin user</p>
@@ -70,11 +126,27 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-          <p className="text-sm font-semibold text-slate-900">Today&apos;s birthdays</p>
+        <div
+          className={`rounded-2xl bg-white/80 p-5 shadow-sm backdrop-blur-xl ${
+            hasBirthdaysToday
+              ? "border-2 border-rose-400 ring-2 ring-rose-200/70"
+              : "border border-slate-200"
+          }`}
+        >
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            {hasBirthdaysToday ? <Gift className="h-4 w-4 shrink-0 text-rose-600" aria-hidden /> : null}
+            Today&apos;s birthdays
+          </p>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            {(q.data?.todaysBirthdays ?? []).length ? (
-              q.data!.todaysBirthdays.map((p) => <li key={p.id}>{p.fullName}</li>)
+            {hasBirthdaysToday ? (
+              todays.map((p) => (
+                <li
+                  key={p.id}
+                  className="rounded-lg border border-rose-200 bg-rose-50/90 px-3 py-2 font-medium text-slate-900"
+                >
+                  {p.fullName}
+                </li>
+              ))
             ) : (
               <li className="text-slate-500">No birthdays today.</li>
             )}
@@ -86,7 +158,7 @@ export default function AdminDashboardPage() {
             {(q.data?.upcomingBirthdaysNext7Days ?? []).length ? (
               q.data!.upcomingBirthdaysNext7Days.map((p) => (
                 <li key={`${p.id}-${p.date}`}>
-                  {p.fullName} - {new Date(p.date).toLocaleDateString()}
+                  {p.fullName} — {new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                 </li>
               ))
             ) : (

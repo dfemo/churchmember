@@ -1,10 +1,11 @@
 "use client";
 
 import { api, getApiErrorMessage } from "@/lib/api";
-import { formatPhoneForWhatsapp, openSmsToPhone, personalizeWhatsappMessage, type WhatsappFormatOptions } from "@/lib/whatsapp";
+import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
+import { openSmsToPhone, personalizeWhatsappMessage } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile } from "@/types/member";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 type Recipient = MemberListItem | MemberProfile;
 
@@ -13,7 +14,6 @@ type SendMessageDialogProps = {
   onClose: () => void;
   user: Recipient | null;
   template: string;
-  waOptions: WhatsappFormatOptions;
   /** When using Open SMS, keep template saved in the browser (same as before). */
   onPersistTemplate: () => void;
   onWhatsappSent?: () => void;
@@ -24,7 +24,6 @@ export function SendMessageDialog({
   onClose,
   user,
   template,
-  waOptions,
   onPersistTemplate,
   onWhatsappSent,
 }: SendMessageDialogProps) {
@@ -33,6 +32,14 @@ export function SendMessageDialog({
   const [body, setBody] = useState("");
   const [waSending, setWaSending] = useState(false);
   const [waError, setWaError] = useState<string | null>(null);
+
+  const e164Opts = useMemo(() => getE164OptionsFromEnv(), []);
+
+  const e164 = useMemo(() => {
+    if (!user?.phoneNumber?.trim()) return null;
+    const r = toE164Digits(user.phoneNumber, e164Opts);
+    return r.ok ? r.digits : null;
+  }, [user, e164Opts]);
 
   useEffect(() => {
     if (open && user) {
@@ -45,7 +52,6 @@ export function SendMessageDialog({
     if (open) closeRef.current?.focus();
   }, [open]);
 
-  const e164 = user ? formatPhoneForWhatsapp(user.phoneNumber, waOptions) : null;
   const canSend = Boolean(e164 && body.trim());
   const waDisabled = !canSend || waSending;
 
@@ -102,6 +108,12 @@ export function SendMessageDialog({
                 <span className="ml-1 font-mono text-slate-500">· {user.phoneNumber}</span>
               ) : null}
             </p>
+            {e164 ? (
+              <p className="mt-1 text-[11px] font-medium text-emerald-900">
+                WhatsApp / SMS send to international number:{" "}
+                <span className="font-mono text-emerald-950">+{e164}</span>
+              </p>
+            ) : null}
           </div>
           <button
             ref={closeRef}
@@ -124,11 +136,10 @@ export function SendMessageDialog({
             <p className="text-xs text-slate-500">
               <span className="font-medium text-slate-700">WhatsApp</span> is sent from the server
               using the Meta WhatsApp Business Cloud API (configure{" "}
-              <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud</code> on the API). Free-form
-              text only works when Meta allows it (e.g. within 24h of the user messaging you, or
-              per your WABA policy).{" "}
-              <span className="font-medium text-slate-700">SMS</span> opens your device&apos;s text
-              app (phones only).
+              <code className="rounded bg-slate-100 px-0.5">WhatsApp:Cloud</code> on the API). The recipient
+              address uses E.164 digits (same normalization as the API database).{" "}
+              <span className="font-medium text-slate-700">SMS</span> opens your device&apos;s text app
+              (phones only).
             </p>
           )}
 

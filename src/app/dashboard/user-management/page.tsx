@@ -128,16 +128,7 @@ export default function UserManagementPage() {
 
   if (users.isError) return <p className="text-sm text-rose-700">{getApiErrorMessage(users.error)}</p>;
 
-  /** One country for legacy "0…" local numbers (e.g. 0803… → 234803…). For mixed UK/US/NG, use +E.164 on each profile. */
   const defaultWaCountry = process.env.NEXT_PUBLIC_WHATSAPP_DEFAULT_COUNTRY?.replace(/\D/g, "") || "234";
-  const applyLeadingZeroRule = process.env.NEXT_PUBLIC_WHATSAPP_DISABLE_LEADING_ZERO !== "true";
-  /** Off by default: 10 digits could be a national number in another country; opt in for US/Canada–only data. */
-  const prepend1Us = process.env.NEXT_PUBLIC_WHATSAPP_PREPEND_1_US === "true";
-
-  const waOptions = {
-    defaultCountryForLeadingZero: applyLeadingZeroRule ? defaultWaCountry : undefined,
-    prependOneFor10DigitNanp: prepend1Us,
-  } as const;
 
   return (
     <div className="space-y-4">
@@ -494,7 +485,6 @@ export default function UserManagementPage() {
         onClose={() => setMessageUser(null)}
         user={messageUser}
         template={waTemplate}
-        waOptions={waOptions}
         onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
         onWhatsappSent={() => {
           setErr(null);
