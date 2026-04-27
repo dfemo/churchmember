@@ -227,7 +227,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 </button>
                 <div className="h-8 w-px bg-slate-200" />
                 <div className="hidden md:block">
-                  <p className="truncate text-sm font-semibold text-slate-900">Admin workspace</p>
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {isAdmin ? "Admin workspace" : "Member workspace"}
+                  </p>
                 </div>
                 <div className="mx-auto hidden max-w-xl flex-1 px-3 md:block">
                   <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2">
