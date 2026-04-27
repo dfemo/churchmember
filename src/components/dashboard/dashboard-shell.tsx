@@ -62,10 +62,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className="min-h-svh bg-slate-100">
+    <div className="min-h-svh bg-[radial-gradient(circle_at_10%_20%,#0ea5e9_0%,#1e293b_35%,#0f172a_100%)]">
       <div className="flex min-h-svh w-full">
         <aside
-          className={`hidden min-h-svh shrink-0 bg-slate-900 p-4 text-white transition-all duration-200 lg:block ${
+          className={`hidden min-h-svh shrink-0 border-r border-white/10 bg-slate-950/60 p-4 text-white backdrop-blur-xl transition-all duration-200 lg:block ${
             sidebarCollapsed ? "w-20" : "w-72"
           }`}
         >
@@ -80,26 +80,26 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="flex min-h-svh flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-6 py-4">
+          <header className="sticky top-0 z-10 border-b border-white/20 bg-white/10 px-6 py-4 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setSidebarCollapsed((v) => !v)}
-                  className="hidden rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 lg:inline-flex"
+                  className="hidden rounded-lg border border-white/30 bg-white/20 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/30 lg:inline-flex"
                 >
                   {sidebarCollapsed ? "Expand" : "Collapse"}
                 </button>
-                <div className="h-8 w-px bg-slate-200" />
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <div className="h-8 w-px bg-white/30" />
+                <p className="truncate text-sm font-semibold text-white">
                   Welcome back, {user?.fullName ?? "User"}
                 </p>
               </div>
               <div className="min-w-0 text-right">
-                <p className="truncate text-xs text-slate-500">
+                <p className="truncate text-xs text-slate-200">
                   Last login: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
                 </p>
-                <p className="truncate text-xs font-medium text-slate-700">{user?.roles?.join(", ") || "Member"}</p>
+                <p className="truncate text-xs font-medium text-white">{user?.roles?.join(", ") || "Member"}</p>
               </div>
               <button
                 type="button"
@@ -107,7 +107,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   logout();
                   router.push("/login");
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/30"
               >
                 Logout
               </button>
@@ -117,7 +117,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-xs text-slate-700"
+                  className="rounded-md border border-white/30 bg-white/20 px-2 py-1.5 text-center text-xs text-white"
                 >
                   {item.label}
                 </Link>

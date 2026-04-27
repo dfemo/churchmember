@@ -46,14 +46,14 @@ export default function MembershipDetailsPage() {
     onError: (e) => setMessage({ type: "err", text: getApiErrorMessage(e) }),
   });
 
-  if (q.isError) return <p className="text-sm text-rose-700">{getApiErrorMessage(q.error)}</p>;
-  if (q.isLoading || !q.data || !form) return <p className="text-sm text-slate-500">Loading membership…</p>;
+  if (q.isError) return <p className="text-sm text-rose-200">{getApiErrorMessage(q.error)}</p>;
+  if (q.isLoading || !q.data || !form) return <p className="text-sm text-slate-200">Loading membership…</p>;
 
   const profile = q.data;
   return (
-    <div className="max-w-3xl rounded-xl border border-slate-200 bg-white p-5">
-      <h1 className="text-xl font-semibold text-slate-900">View membership details</h1>
-      <p className="mt-1 text-sm text-slate-500">Update records of name, email, date of birth, and address.</p>
+    <div className="max-w-4xl rounded-2xl border border-white/20 bg-white/10 p-5 shadow-sm backdrop-blur-xl">
+      <h1 className="text-xl font-semibold text-white">View membership details</h1>
+      <p className="mt-1 text-sm text-slate-200">Update records of name, email, date of birth, and address.</p>
       <form
         className="mt-5 space-y-4"
         onSubmit={(e) => {
@@ -70,7 +70,9 @@ export default function MembershipDetailsPage() {
         {message ? (
           <p
             className={`rounded-lg px-3 py-2 text-sm ${
-              message.type === "ok" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"
+              message.type === "ok"
+                ? "border border-emerald-300/40 bg-emerald-500/20 text-emerald-100"
+                : "border border-rose-300/40 bg-rose-500/20 text-rose-100"
             }`}
           >
             {message.text}
@@ -78,27 +80,27 @@ export default function MembershipDetailsPage() {
         ) : null}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Phone</label>
-            <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
+            <label className="block text-sm font-medium text-slate-100">Phone</label>
+            <p className="mt-1 rounded-lg border border-white/20 bg-slate-900/30 px-3 py-2.5 text-sm text-slate-100">
               {profile.phoneNumber}
             </p>
           </div>
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="fullName" className="block text-sm font-medium text-slate-100">
               Full name
             </label>
             <input
               id="fullName"
               value={form.fullName}
               onChange={(e) => setForm((f) => (f ? { ...f, fullName: e.target.value } : f))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-slate-300"
               required
             />
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-100">
               Email
             </label>
             <input
@@ -106,11 +108,11 @@ export default function MembershipDetailsPage() {
               type="email"
               value={form.email}
               onChange={(e) => setForm((f) => (f ? { ...f, email: e.target.value } : f))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-slate-300"
             />
           </div>
           <div>
-            <label htmlFor="dob" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="dob" className="block text-sm font-medium text-slate-100">
               Date of birth
             </label>
             <input
@@ -118,12 +120,12 @@ export default function MembershipDetailsPage() {
               type="date"
               value={form.dateOfBirth}
               onChange={(e) => setForm((f) => (f ? { ...f, dateOfBirth: e.target.value } : f))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white"
             />
           </div>
         </div>
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="address" className="block text-sm font-medium text-slate-100">
             Address
           </label>
           <textarea
@@ -131,13 +133,13 @@ export default function MembershipDetailsPage() {
             rows={3}
             value={form.address}
             onChange={(e) => setForm((f) => (f ? { ...f, address: e.target.value } : f))}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+            className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-slate-300"
           />
         </div>
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-lg border border-white/40 bg-white/20 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           {mutation.isPending ? "Saving…" : "Update records"}
         </button>

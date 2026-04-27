@@ -35,50 +35,52 @@ export default function DashboardPasswordPage() {
   }
 
   return (
-    <div className="max-w-xl rounded-xl border border-slate-200 bg-white p-5">
-      <h1 className="text-xl font-semibold text-slate-900">Update password</h1>
-      <p className="mt-1 text-sm text-slate-500">
+    <div className="max-w-xl rounded-2xl border border-white/20 bg-white/10 p-5 shadow-sm backdrop-blur-xl">
+      <h1 className="text-xl font-semibold text-white">Update password</h1>
+      <p className="mt-1 text-sm text-slate-200">
         {mustChangePassword
           ? "Your account requires a new password before continuing."
           : "Set a stronger password to secure your account."}
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p> : null}
+        {error ? (
+          <p className="rounded-lg border border-rose-300/40 bg-rose-500/20 px-3 py-2 text-sm text-rose-100">{error}</p>
+        ) : null}
         <div>
-          <label className="block text-sm font-medium text-slate-700">Current password</label>
+          <label className="block text-sm font-medium text-slate-100">Current password</label>
           <input
             type="password"
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+            className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">New password</label>
+          <label className="block text-sm font-medium text-slate-100">New password</label>
           <input
             type="password"
             value={newPw}
             onChange={(e) => setNewPw(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+            className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white"
             minLength={8}
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Confirm new password</label>
+          <label className="block text-sm font-medium text-slate-100">Confirm new password</label>
           <input
             type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+            className="mt-1 w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white"
             required
           />
         </div>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-lg border border-white/40 bg-white/20 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           {saving ? "Updating…" : "Update password"}
         </button>
@@ -89,7 +91,7 @@ export default function DashboardPasswordPage() {
               logout();
               router.push("/login");
             }}
-            className="ml-3 text-sm text-slate-500 underline"
+            className="ml-3 text-sm text-slate-200 underline"
           >
             Use a different account
           </button>
