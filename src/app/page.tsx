@@ -18,7 +18,7 @@ export default function Home() {
       router.replace("/change-password");
       return;
     }
-    router.replace("/member");
+    router.replace("/dashboard");
   }, [isReady, token, mustChangePassword, router]);
 
   return (

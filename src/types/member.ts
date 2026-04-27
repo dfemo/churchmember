@@ -31,3 +31,18 @@ export type UpdateProfileRequest = {
   dateOfBirth: string | null;
   address: string | null;
 };
+
+export type BirthdayPersonResponse = {
+  id: number;
+  fullName: string;
+  date: string;
+  kind: "Today" | "Upcoming";
+};
+
+export type DashboardStatsResponse = {
+  totalMembers: number;
+  activeMembers: number;
+  inactiveMembers: number;
+  todaysBirthdays: BirthdayPersonResponse[];
+  upcomingBirthdaysNext7Days: BirthdayPersonResponse[];
+};

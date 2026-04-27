@@ -30,8 +30,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isReady) return;
-    if (token && mustChangePassword) router.replace("/change-password");
-    else if (token) router.replace("/member");
+    if (token && mustChangePassword) router.replace("/dashboard/password");
+    else if (token) router.replace("/dashboard");
   }, [isReady, token, mustChangePassword, router]);
 
   useEffect(() => {

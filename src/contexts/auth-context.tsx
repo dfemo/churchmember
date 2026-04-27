@@ -23,6 +23,7 @@ type AuthContextValue = {
   isReady: boolean;
   token: string | null;
   user: UserSummary | null;
+  lastLoginAt: string | null;
   mustChangePassword: boolean;
   error: string | null;
   login: (phoneNumber: string, password: string) => Promise<void>;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSummary | null>(null);
+  const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [mapMemberToUser]);
 
   useEffect(() => {
+    setLastLoginAt(localStorage.getItem("cm_last_login_at"));
     const t = getStoredToken();
     if (!t) {
       setApiAuthToken(null);
@@ -92,6 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearError = useCallback(() => setError(null), []);
 
   const applyAuthResult = useCallback((data: AuthResult) => {
+    const nowIso = new Date().toISOString();
+    setLastLoginAt(localStorage.getItem("cm_last_login_at"));
+    localStorage.setItem("cm_last_login_at", nowIso);
     setStoredToken(data.accessToken);
     setApiAuthToken(data.accessToken);
     setToken(data.accessToken);
@@ -159,8 +165,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setApiAuthToken(null);
     setToken(null);
     setUser(null);
+    setLastLoginAt(null);
     setMustChangePassword(false);
     setError(null);
+    localStorage.removeItem("cm_last_login_at");
   }, []);
 
   const value = useMemo(
@@ -168,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isReady,
       token,
       user,
+      lastLoginAt,
       mustChangePassword,
       error,
       login,
@@ -178,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshMe,
       setMustChangePassword,
     }),
-    [isReady, token, user, mustChangePassword, error, login, register, loginWithGoogle, clearError, logout, refreshMe]
+    [isReady, token, user, lastLoginAt, mustChangePassword, error, login, register, loginWithGoogle, clearError, logout, refreshMe]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
