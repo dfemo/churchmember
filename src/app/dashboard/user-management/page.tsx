@@ -373,7 +373,12 @@ export default function UserManagementPage() {
             className="grid gap-3 md:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!selectedId) return;
+              if (!selectedId || !selected.data) return;
+              if (selected.data.id !== selectedId) {
+                setErr("Editor is out of sync with the selected user. Close the panel and open Edit again.");
+                setOk(null);
+                return;
+              }
               const opt = getE164OptionsFromEnv();
               const e164 = toE164Digits(form.phoneNumber, opt);
               if (!e164.ok) {
