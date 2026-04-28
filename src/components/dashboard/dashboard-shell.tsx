@@ -7,6 +7,7 @@ import {
   Bell,
   ClipboardList,
   CreditCard,
+  FileSpreadsheet,
   HelpCircle,
   KeyRound,
   LayoutDashboard,
@@ -146,6 +147,7 @@ function SidebarContent({
     ? [
         { href: "/dashboard/user-management", label: "User management", icon: UserCog },
         { href: "/dashboard/user-management/create", label: "Create new user", icon: UserPlus, sub: true },
+        { href: "/dashboard/user-management/bulk-upload", label: "Bulk upload", icon: FileSpreadsheet, sub: true },
         { href: "/dashboard/profile-field-options", label: "Title & position lists", icon: Tags },
       ]
     : [];

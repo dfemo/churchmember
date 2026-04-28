@@ -144,12 +144,20 @@ export default function UserManagementPage() {
             .
           </p>
         </div>
-        <Link
-          href="/dashboard/user-management/create"
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          Create new user
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/dashboard/user-management/bulk-upload"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+          >
+            Bulk upload
+          </Link>
+          <Link
+            href="/dashboard/user-management/create"
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Create new user
+          </Link>
+        </div>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">

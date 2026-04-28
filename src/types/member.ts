@@ -60,6 +60,32 @@ export type UpdateMemberRequest = {
   role: "Admin" | "Member";
 };
 
+/** Admin-only POST /api/members/bulk */
+export type BulkImportMemberRow = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  dateOfBirth: string | null;
+};
+
+export type BulkImportMembersRequest = {
+  rows: BulkImportMemberRow[];
+  defaultPassword: string;
+};
+
+export type BulkImportMemberResultRow = {
+  excelRowNumber: number;
+  success: boolean;
+  error: string | null;
+  createdUserId: number | null;
+};
+
+export type BulkImportMembersResponse = {
+  createdCount: number;
+  failedCount: number;
+  results: BulkImportMemberResultRow[];
+};
+
 /** Admin-only POST /api/members */
 export type CreateMemberRequest = {
   fullName: string;
