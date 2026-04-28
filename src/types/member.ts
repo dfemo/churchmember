@@ -22,6 +22,7 @@ export type MemberProfile = {
   address: string | null;
   title: string | null;
   position: string | null;
+  departments?: string[];
   status: MemberStatus;
   roles: string[];
   mustChangePassword: boolean;
@@ -47,6 +48,7 @@ export type MemberListItem = {
   status: MemberStatus;
   title: string | null;
   position: string | null;
+  departments?: string[];
   roles: string[];
   dateOfBirth: string | null;
 };

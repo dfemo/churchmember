@@ -10,7 +10,7 @@ import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { SendMessageDialog } from "@/components/user-management/send-message-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Gift, Send } from "lucide-react";
+import { Eye, Gift, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 function toDateInput(v: string | null | undefined) {
@@ -236,6 +236,7 @@ export default function UserManagementPage() {
                 <th className="px-4 py-3 text-left font-medium">Status</th>
                 <th className="px-4 py-3 text-left font-medium">Title</th>
                 <th className="px-4 py-3 text-left font-medium">Position</th>
+                <th className="px-4 py-3 text-left font-medium">Department</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -278,8 +279,16 @@ export default function UserManagementPage() {
                   <td className="px-4 py-3">{u.status}</td>
                   <td className="px-4 py-3">{u.title ?? "-"}</td>
                   <td className="px-4 py-3">{u.position ?? "-"}</td>
+                  <td className="px-4 py-3">{u.departments?.length ? u.departments.join(", ") : "-"}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <Link
+                        href={`/dashboard/user-management/${u.id}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                      >
+                        <Eye className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                        View profile
+                      </Link>
                       <button
                         type="button"
                         onClick={() => {
@@ -308,7 +317,7 @@ export default function UserManagementPage() {
               })}
               {!pagedUsers.length ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-500">
                     No users found.
                   </td>
                 </tr>
