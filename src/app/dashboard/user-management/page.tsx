@@ -133,15 +133,23 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">User management</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          View all users and edit profile (including international phone), role, status, title, and position.{" "}
-          <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
-            Configure title &amp; position lists
-          </Link>
-          .
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">User management</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            View all users and edit profile (including international phone), role, status, title, and position.{" "}
+            <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
+              Configure title &amp; position lists
+            </Link>
+            .
+          </p>
+        </div>
+        <Link
+          href="/dashboard/user-management/create"
+          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Create new user
+        </Link>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">

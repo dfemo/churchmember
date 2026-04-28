@@ -60,6 +60,20 @@ export type UpdateMemberRequest = {
   role: "Admin" | "Member";
 };
 
+/** Admin-only POST /api/members */
+export type CreateMemberRequest = {
+  fullName: string;
+  phoneNumber: string;
+  email: string | null;
+  dateOfBirth: string | null;
+  address: string | null;
+  title: string | null;
+  position: string | null;
+  status: MemberStatus;
+  role: "Admin" | "Member";
+  defaultPassword: string;
+};
+
 export type BirthdayPersonResponse = {
   id: number;
   fullName: string;
