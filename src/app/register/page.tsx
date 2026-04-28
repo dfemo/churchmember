@@ -5,6 +5,7 @@ import { AuthTextField } from "@/components/auth/auth-text-field";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useAuth } from "@/contexts/auth-context";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,6 +30,8 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -183,20 +186,40 @@ export default function RegisterPage() {
         <AuthTextField
           id="registerPassword"
           label="Password (min. 8 characters)"
-          type="password"
+          type={showPassword ? "text" : "password"}
           autoComplete="new-password"
           value={password}
           onChange={setPassword}
           required
+          rightElement={
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
         />
         <AuthTextField
           id="confirm"
           label="Confirm password"
-          type="password"
+          type={showConfirm ? "text" : "password"}
           autoComplete="new-password"
           value={confirm}
           onChange={setConfirm}
           required
+          rightElement={
+            <button
+              type="button"
+              onClick={() => setShowConfirm((v) => !v)}
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+            >
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
         />
 
         <button

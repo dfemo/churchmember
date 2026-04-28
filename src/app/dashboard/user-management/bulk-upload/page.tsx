@@ -2,6 +2,7 @@
 
 import { api, getApiErrorMessage } from "@/lib/api";
 import { parseMemberExcel } from "@/lib/parse-member-excel";
+import { Eye, EyeOff } from "lucide-react";
 import type { BulkImportMembersRequest, BulkImportMembersResponse } from "@/types/member";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -14,6 +15,8 @@ export default function BulkUploadPage() {
   const [pendingPayload, setPendingPayload] = useState<BulkImportMembersRequest | null>(null);
   const [defaultPassword, setDefaultPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showDefaultPassword, setShowDefaultPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
 
   const bulkMut = useMutation({
@@ -116,23 +119,43 @@ export default function BulkUploadPage() {
           <div className="mt-3 grid max-w-md gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-slate-600">Password</label>
-              <input
-                type="password"
-                autoComplete="new-password"
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-                value={defaultPassword}
-                onChange={(e) => setDefaultPassword(e.target.value)}
-              />
+              <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2">
+                <input
+                  type={showDefaultPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  className="w-full bg-transparent text-sm outline-none"
+                  value={defaultPassword}
+                  onChange={(e) => setDefaultPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDefaultPassword((v) => !v)}
+                  className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  aria-label={showDefaultPassword ? "Hide password" : "Show password"}
+                >
+                  {showDefaultPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Confirm</label>
-              <input
-                type="password"
-                autoComplete="new-password"
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+              <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  className="w-full bg-transparent text-sm outline-none"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">

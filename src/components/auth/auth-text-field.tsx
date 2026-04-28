@@ -11,6 +11,7 @@ type Props = {
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
+  rightElement?: React.ReactNode;
 };
 
 function FieldIcon({ kind }: { kind: "email" | "password" | "text" | "phone" }) {
@@ -65,6 +66,7 @@ export function AuthTextField({
   value,
   onChange,
   required,
+  rightElement,
 }: Props) {
   const iconKind =
     type === "email" ? "email" : type === "password" ? "password" : type === "tel" ? "phone" : "text";
@@ -89,6 +91,7 @@ export function AuthTextField({
           required={required}
           aria-describedby={hint ? `${id}-hint` : undefined}
         />
+        {rightElement}
       </div>
       {hint ? (
         <p id={`${id}-hint`} className="mt-1.5 text-xs leading-relaxed text-slate-500">

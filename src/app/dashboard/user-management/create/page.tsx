@@ -3,6 +3,7 @@
 import { api, getApiErrorMessage } from "@/lib/api";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
+import { Eye, EyeOff } from "lucide-react";
 import type { CreateMemberRequest, MemberProfile } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +43,8 @@ export default function CreateUserPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreateForm>(emptyForm);
+  const [showDefaultPassword, setShowDefaultPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const bundleQ = useQuery({
@@ -234,28 +237,48 @@ export default function CreateUserPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600">Initial password</label>
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-              value={form.defaultPassword}
-              onChange={(e) => setForm((f) => ({ ...f, defaultPassword: e.target.value }))}
-            />
+            <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2">
+              <input
+                type={showDefaultPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="w-full bg-transparent text-sm outline-none"
+                value={form.defaultPassword}
+                onChange={(e) => setForm((f) => ({ ...f, defaultPassword: e.target.value }))}
+              />
+              <button
+                type="button"
+                onClick={() => setShowDefaultPassword((v) => !v)}
+                className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                aria-label={showDefaultPassword ? "Hide initial password" : "Show initial password"}
+              >
+                {showDefaultPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <p className="mt-1 text-[11px] text-slate-500">Minimum 8 characters. User must change password after first sign-in.</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600">Confirm password</label>
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-              value={form.confirmPassword}
-              onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-            />
+            <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="w-full bg-transparent text-sm outline-none"
+                value={form.confirmPassword}
+                onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <div className="md:col-span-2 flex flex-wrap items-center gap-2">
             <button

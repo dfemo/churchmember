@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -11,6 +12,9 @@ export default function DashboardPasswordPage() {
   const [current, setCurrent] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -48,34 +52,64 @@ export default function DashboardPasswordPage() {
         ) : null}
         <div>
           <label className="block text-sm font-medium text-slate-700">Current password</label>
-          <input
-            type="password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
-            required
-          />
+          <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 focus-within:border-cyan-400 focus-within:bg-white">
+            <input
+              type={showCurrent ? "text" : "password"}
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              className="w-full bg-transparent text-sm text-slate-900 outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrent((v) => !v)}
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label={showCurrent ? "Hide current password" : "Show current password"}
+            >
+              {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">New password</label>
-          <input
-            type="password"
-            value={newPw}
-            onChange={(e) => setNewPw(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
-            minLength={8}
-            required
-          />
+          <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 focus-within:border-cyan-400 focus-within:bg-white">
+            <input
+              type={showNew ? "text" : "password"}
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              className="w-full bg-transparent text-sm text-slate-900 outline-none"
+              minLength={8}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowNew((v) => !v)}
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label={showNew ? "Hide new password" : "Show new password"}
+            >
+              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Confirm new password</label>
-          <input
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-cyan-400 focus:bg-white focus:outline-none"
-            required
-          />
+          <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 focus-within:border-cyan-400 focus-within:bg-white">
+            <input
+              type={showConfirm ? "text" : "password"}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full bg-transparent text-sm text-slate-900 outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm((v) => !v)}
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+            >
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <button
           type="submit"

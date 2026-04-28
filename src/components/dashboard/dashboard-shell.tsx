@@ -5,26 +5,22 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bell,
+  ChevronDown,
   ClipboardList,
-  CreditCard,
-  FileSpreadsheet,
-  HelpCircle,
   KeyRound,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
   PanelLeft,
+  ReceiptText,
   Search,
   Settings,
-  Tags,
   UserCircle,
   UserCog,
   UserPlus,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 type MenuItem = {
   href: string;
@@ -32,6 +28,14 @@ type MenuItem = {
   icon: LucideIcon;
   badge?: string;
   sub?: boolean;
+};
+
+type MenuSection = {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  items: MenuItem[];
+  adminOnly?: boolean;
 };
 
 function NavItem({
@@ -85,33 +89,61 @@ function NavItem({
 }
 
 function NavSection({
-  id,
-  title,
-  items,
+  section,
   collapsed,
+  expanded,
+  onToggle,
   onNavigate,
 }: {
-  id: string;
-  title: string;
-  items: MenuItem[];
+  section: MenuSection;
   collapsed: boolean;
+  expanded: boolean;
+  onToggle: () => void;
   onNavigate?: () => void;
 }) {
-  return (
-    <section className="space-y-1" aria-labelledby={id}>
-      {!collapsed ? (
-        <h2
-          id={id}
-          className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 first:pt-0"
-        >
-          {title}
-        </h2>
-      ) : null}
-      <nav className="space-y-0.5" aria-label={title}>
-        {items.map((item) => (
+  const pathname = usePathname();
+  const activeInSection = section.items.some(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+  );
+  const SectionIcon = section.icon;
+
+  if (collapsed) {
+    return (
+      <section className="space-y-0.5">
+        {section.items.map((item) => (
           <NavItem key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
-      </nav>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-1" aria-labelledby={section.id}>
+      <button
+        type="button"
+        id={section.id}
+        onClick={onToggle}
+        className={[
+          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-semibold tracking-[0.08em] uppercase transition",
+          activeInSection
+            ? "bg-white/[0.08] text-zinc-100"
+            : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200",
+        ].join(" ")}
+      >
+        <SectionIcon className="h-4 w-4" strokeWidth={1.6} />
+        <span className="min-w-0 flex-1 truncate">{section.title}</span>
+        <ChevronDown
+          className={["h-4 w-4 transition-transform", expanded ? "rotate-180" : ""].join(" ")}
+          strokeWidth={1.6}
+        />
+      </button>
+      {expanded ? (
+        <nav className="space-y-0.5" aria-label={section.title}>
+          {section.items.map((item) => (
+            <NavItem key={item.href} item={{ ...item, sub: true }} collapsed={collapsed} onNavigate={onNavigate} />
+          ))}
+        </nav>
+      ) : null}
     </section>
   );
 }
@@ -127,34 +159,65 @@ function SidebarContent({
   onNavigate?: () => void;
   onToggleCollapse: () => void;
 }) {
-  const overview: MenuItem[] = [
-    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  ];
-  const operations: MenuItem[] = [
-    { href: "/dashboard/payment", label: "Payment", icon: CreditCard },
-    { href: "/dashboard/members", label: "Members", icon: Users },
-    { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
-  ];
-  const activity: MenuItem[] = [
-    { href: "/dashboard/attendant", label: "Attendance", icon: ClipboardList, sub: true },
-    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare, sub: true, badge: "8" },
-  ];
-  const myAccount: MenuItem[] = [
-    { href: "/dashboard/membership", label: "My profile", icon: UserCircle },
-    { href: "/dashboard/password", label: "Sign-in & security", icon: KeyRound },
-  ];
-  const admin: MenuItem[] = isAdmin
-    ? [
-        { href: "/dashboard/user-management", label: "User management", icon: UserCog },
-        { href: "/dashboard/user-management/create", label: "Create new user", icon: UserPlus, sub: true },
-        { href: "/dashboard/user-management/bulk-upload", label: "Bulk upload", icon: FileSpreadsheet, sub: true },
-        { href: "/dashboard/profile-field-options", label: "Title & position lists", icon: Tags },
-      ]
-    : [];
-  const system: MenuItem[] = [
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
-    { href: "/dashboard/help", label: "Help", icon: HelpCircle },
-  ];
+  const pathname = usePathname();
+  const sections = useMemo<MenuSection[]>(
+    () => [
+      {
+        id: "nav-dashboard",
+        title: "Dashboard",
+        icon: LayoutDashboard,
+        adminOnly: true,
+        items: [{ href: "/dashboard/admin", label: "Dashboard", icon: LayoutDashboard }],
+      },
+      {
+        id: "nav-users",
+        title: "User Management",
+        icon: UserCog,
+        adminOnly: true,
+        items: [
+          { href: "/dashboard/user-management", label: "View all users", icon: UserCog },
+          { href: "/dashboard/user-management/create", label: "Create user", icon: UserPlus },
+        ],
+      },
+      {
+        id: "nav-attendance",
+        title: "Attendance Management",
+        icon: ClipboardList,
+        adminOnly: true,
+        items: [
+          { href: "/dashboard/attendant", label: "View metrics", icon: ClipboardList },
+          { href: "/dashboard/reports", label: "View growth", icon: BarChart3 },
+        ],
+      },
+      {
+        id: "nav-reports",
+        title: "Report Management",
+        icon: ReceiptText,
+        adminOnly: true,
+        items: [{ href: "/dashboard/reports", label: "Reports", icon: ReceiptText }],
+      },
+      {
+        id: "nav-account",
+        title: "Account Management",
+        icon: UserCircle,
+        items: [
+          { href: "/dashboard/membership", label: "My profile", icon: UserCircle },
+          { href: "/dashboard/password", label: "Change password", icon: KeyRound },
+        ],
+      },
+    ],
+    []
+  );
+  const visibleSections = sections.filter((s) => (s.adminOnly ? isAdmin : true));
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const activeSection = visibleSections.find((s) =>
+      s.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    );
+    if (!activeSection) return;
+    setExpandedSections((prev) => ({ ...prev, [activeSection.id]: true }));
+  }, [pathname, visibleSections]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -176,50 +239,21 @@ function SidebarContent({
       </div>
 
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <NavSection
-          id="nav-overview"
-          title="Overview"
-          items={overview}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-        <NavSection
-          id="nav-ops"
-          title="Operations"
-          items={operations}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-        <NavSection
-          id="nav-activity"
-          title="Activity"
-          items={activity}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-        <NavSection
-          id="nav-account"
-          title="My account"
-          items={myAccount}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-        {admin.length > 0 ? (
+        {visibleSections.map((section) => (
           <NavSection
-            id="nav-admin"
-            title="Administration"
-            items={admin}
+            key={section.id}
+            section={section}
             collapsed={collapsed}
+            expanded={Boolean(expandedSections[section.id])}
+            onToggle={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                [section.id]: !prev[section.id],
+              }))
+            }
             onNavigate={onNavigate}
           />
-        ) : null}
-        <NavSection
-          id="nav-system"
-          title="System"
-          items={system}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
+        ))}
       </div>
 
       <div className="mt-auto border-t border-zinc-800/80 pt-3">
