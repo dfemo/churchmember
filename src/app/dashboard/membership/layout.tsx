@@ -18,7 +18,7 @@ export default function MembershipSectionLayout({ children }: { children: React.
   return (
     <div className="mx-auto max-w-4xl px-1 sm:px-0">
       <nav
-        className="mb-4 flex gap-1.5 rounded-2xl border border-slate-200 bg-white/90 p-1.5 shadow-sm backdrop-blur-sm lg:hidden"
+        className="mb-4 flex gap-1.5 rounded-2xl border border-slate-200 bg-white/90 p-1.5 shadow-sm backdrop-blur-sm"
         aria-label="My profile sections"
       >
         {TABS.map((t) => {

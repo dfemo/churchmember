@@ -27,3 +27,8 @@ body {
   font-size: 0.875rem; /* 14px — small default; headings use explicit sizes / utilities */
   line-height: 1.45;
 }
+
+/* Sonner portal above dashboard chrome (sidebar/header use z-40–50) */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
