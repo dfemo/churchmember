@@ -5,16 +5,50 @@ import type { MemberProfile } from "@/types/member";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+type MediaKind = "profile" | "birthday1" | "birthday2" | "birthday3";
+
+function toDataUrl(bytes: ArrayBuffer, contentType: string) {
+  let binary = "";
+  const arr = new Uint8Array(bytes);
+  const chunk = 0x8000;
+  for (let i = 0; i < arr.length; i += chunk) binary += String.fromCharCode(...arr.subarray(i, i + chunk));
+  return `data:${contentType};base64,${btoa(binary)}`;
+}
 
 export default function UserProfileViewPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
+  const [mediaUrls, setMediaUrls] = useState<Partial<Record<MediaKind, string>>>({});
 
   const memberQ = useQuery({
     queryKey: ["member", id, "profile-view"],
     enabled: Number.isFinite(id) && id > 0,
     queryFn: async () => (await api.get<MemberProfile>(`/api/members/${id}`)).data,
   });
+
+  useEffect(() => {
+    if (!Number.isFinite(id) || id <= 0) return;
+    let mounted = true;
+    async function loadMedia() {
+      const kinds: MediaKind[] = ["profile", "birthday1", "birthday2", "birthday3"];
+      const next: Partial<Record<MediaKind, string>> = {};
+      for (const kind of kinds) {
+        try {
+          const res = await api.get<ArrayBuffer>(`/api/members/${id}/media/${kind}`, { responseType: "arraybuffer" });
+          next[kind] = toDataUrl(res.data, String(res.headers["content-type"] ?? "image/jpeg"));
+        } catch {
+          // missing image
+        }
+      }
+      if (mounted) setMediaUrls(next);
+    }
+    void loadMedia();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
   if (!Number.isFinite(id) || id <= 0) {
     return <p className="text-sm text-rose-700">Invalid member id.</p>;
@@ -52,6 +86,29 @@ export default function UserProfileViewPage() {
         <div className="md:col-span-2">
           <p className="text-xs font-medium text-slate-600">Address</p>
           <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">{m.address || "-"}</p>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Uploaded pictures</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {([
+            ["profile", "Profile"],
+            ["birthday1", "Birthday 1"],
+            ["birthday2", "Birthday 2"],
+            ["birthday3", "Birthday 3"],
+          ] as [MediaKind, string][]).map(([kind, label]) => (
+            <div key={kind} className="rounded-lg border border-slate-200 p-2">
+              <p className="text-xs font-medium text-slate-600">{label}</p>
+              {mediaUrls[kind] ? (
+                <img src={mediaUrls[kind]} alt={label} className="mt-2 h-36 w-full rounded object-cover" />
+              ) : (
+                <div className="mt-2 flex h-36 w-full items-center justify-center rounded bg-slate-100 text-xs text-slate-500">
+                  No image
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
     </div>

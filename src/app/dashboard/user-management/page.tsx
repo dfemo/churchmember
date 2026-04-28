@@ -34,6 +34,7 @@ function buildFormData(profile: MemberProfile): UpdateMemberRequest {
     address: profile.address ?? null,
     title: profile.title ?? null,
     position: profile.position ?? null,
+    departments: profile.departments ?? [],
     status: profile.status,
     role: profile.roles.includes("Admin") ? "Admin" : "Member",
   };
@@ -126,6 +127,10 @@ export default function UserManagementPage() {
     () => mergePicklistWithCurrent(selected.data?.position, bundleQ.data?.positions ?? []),
     [selected.data?.position, bundleQ.data?.positions]
   );
+  const departmentChoices = useMemo(
+    () => bundleQ.data?.departments ?? [],
+    [bundleQ.data?.departments]
+  );
 
   if (users.isError) return <p className="text-sm text-rose-700">{getApiErrorMessage(users.error)}</p>;
 
@@ -137,7 +142,7 @@ export default function UserManagementPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">User management</h1>
           <p className="mt-1 text-sm text-slate-500">
-            View all users and edit profile (including international phone), role, status, title, and position.{" "}
+            View all users and edit profile (including international phone), role, status, title, position, and departments.{" "}
             <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
               Configure title &amp; position lists
             </Link>
@@ -363,7 +368,7 @@ export default function UserManagementPage() {
         <div className="mb-4 flex items-center justify-between gap-2">
           <div>
             <p className="text-base font-semibold text-slate-900">Edit user</p>
-            <p className="text-xs text-slate-500">Update user information, phone (E.164), role, status, title, and position.</p>
+            <p className="text-xs text-slate-500">Update user information, phone (E.164), role, status, title, position, and departments.</p>
           </div>
           <div className="flex flex-shrink-0 items-center gap-1.5">
             {selected.data ? (
@@ -487,6 +492,36 @@ export default function UserManagementPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-slate-600">Departments</label>
+              <div className="mt-1 grid gap-2 rounded-lg border border-slate-300 bg-slate-50 p-2 sm:grid-cols-2">
+                {departmentChoices.length === 0 ? (
+                  <p className="text-xs text-slate-500">No department options configured yet.</p>
+                ) : (
+                  departmentChoices.map((dep) => {
+                    const checked = (form.departments ?? []).includes(dep);
+                    return (
+                      <label key={dep} className="inline-flex items-center gap-2 rounded-md px-1 py-1 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              if (!f) return f;
+                              const set = new Set(f.departments ?? []);
+                              if (e.target.checked) set.add(dep);
+                              else set.delete(dep);
+                              return { ...f, departments: Array.from(set).sort((a, b) => a.localeCompare(b)) };
+                            })
+                          }
+                        />
+                        <span>{dep}</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Role</label>

@@ -1,6 +1,7 @@
 export type ProfileFieldOptionsBundle = {
   titles: string[];
   positions: string[];
+  departments: string[];
 };
 
 export type ProfileFieldOptionAdminRow = {
@@ -11,6 +12,6 @@ export type ProfileFieldOptionAdminRow = {
 };
 
 export type AddProfileFieldOptionRequest = {
-  kind: "Title" | "Position";
+  kind: "Title" | "Position" | "Department";
   value: string;
 };

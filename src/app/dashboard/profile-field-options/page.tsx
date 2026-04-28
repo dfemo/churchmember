@@ -15,7 +15,7 @@ export default function ProfileFieldOptionsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [kind, setKind] = useState<"Title" | "Position">("Title");
+  const [kind, setKind] = useState<"Title" | "Position" | "Department">("Title");
   const [value, setValue] = useState("");
   const [banner, setBanner] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -38,6 +38,13 @@ export default function ProfileFieldOptionsPage() {
     () =>
       (list.data ?? [])
         .filter((r) => r.kind === "Position")
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value)),
+    [list.data]
+  );
+  const departments = useMemo(
+    () =>
+      (list.data ?? [])
+        .filter((r) => r.kind === "Department")
         .sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value)),
     [list.data]
   );
@@ -74,7 +81,7 @@ export default function ProfileFieldOptionsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Title &amp; position lists</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Title, position &amp; department lists</h1>
         <p className="mt-1 text-sm text-slate-500">
           These values populate dropdowns on{" "}
           <Link href="/dashboard/membership" className="font-medium text-violet-700 underline-offset-2 hover:underline">
@@ -115,11 +122,12 @@ export default function ProfileFieldOptionsPage() {
             <label className="block text-xs font-medium text-slate-600">Kind</label>
             <select
               value={kind}
-              onChange={(e) => setKind(e.target.value as "Title" | "Position")}
+              onChange={(e) => setKind(e.target.value as "Title" | "Position" | "Department")}
               className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
             >
               <option value="Title">Title</option>
               <option value="Position">Position</option>
+              <option value="Department">Department</option>
             </select>
           </div>
           <div className="min-w-0 flex-1">
@@ -127,7 +135,7 @@ export default function ProfileFieldOptionsPage() {
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={kind === "Title" ? "e.g. Engr." : "e.g. Elder"}
+              placeholder={kind === "Title" ? "e.g. Engr." : kind === "Position" ? "e.g. Elder" : "e.g. Choir"}
               className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
             />
           </div>
@@ -141,7 +149,7 @@ export default function ProfileFieldOptionsPage() {
         </form>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <OptionTable
           title="Titles"
           rows={titles}
@@ -154,6 +162,15 @@ export default function ProfileFieldOptionsPage() {
         <OptionTable
           title="Positions"
           rows={positions}
+          onDelete={(id) => {
+            setBanner(null);
+            remove.mutate(id);
+          }}
+          deleting={remove.isPending}
+        />
+        <OptionTable
+          title="Departments"
+          rows={departments}
           onDelete={(id) => {
             setBanner(null);
             remove.mutate(id);

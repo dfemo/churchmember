@@ -62,6 +62,7 @@ export type UpdateMemberRequest = {
   address: string | null;
   title: string | null;
   position: string | null;
+  departments?: string[];
   status: MemberStatus;
   role: "Admin" | "Member";
 };
@@ -101,6 +102,7 @@ export type CreateMemberRequest = {
   address: string | null;
   title: string | null;
   position: string | null;
+  departments?: string[];
   status: MemberStatus;
   role: "Admin" | "Member";
   defaultPassword: string;
