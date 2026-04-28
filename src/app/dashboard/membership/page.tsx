@@ -58,6 +58,18 @@ function buildIso(m: string, d: string, y: string): string | null {
   return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
+type MediaKind = "profile" | "birthday1" | "birthday2" | "birthday3";
+
+function toDataUrl(bytes: ArrayBuffer, contentType: string) {
+  let binary = "";
+  const arr = new Uint8Array(bytes);
+  const chunk = 0x8000;
+  for (let i = 0; i < arr.length; i += chunk) {
+    binary += String.fromCharCode(...arr.subarray(i, i + chunk));
+  }
+  return `data:${contentType};base64,${btoa(binary)}`;
+}
+
 export default function MembershipDetailsPage() {
   const { user } = useAuth();
   const isAdmin = Boolean(user?.roles?.includes("Admin"));
@@ -74,6 +86,7 @@ export default function MembershipDetailsPage() {
     position: string;
   } | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [mediaUrls, setMediaUrls] = useState<Partial<Record<MediaKind, string>>>({});
 
   const q = useQuery({
     queryKey: ["me"],
@@ -103,6 +116,28 @@ export default function MembershipDetailsPage() {
       position: q.data.position ?? "",
     });
   }, [q.data]);
+
+  useEffect(() => {
+    let alive = true;
+    async function loadMedia() {
+      const kinds: MediaKind[] = ["profile", "birthday1", "birthday2", "birthday3"];
+      const next: Partial<Record<MediaKind, string>> = {};
+      for (const kind of kinds) {
+        try {
+          const res = await api.get<ArrayBuffer>(`/api/members/me/media/${kind}`, { responseType: "arraybuffer" });
+          const ct = String(res.headers["content-type"] ?? "image/jpeg");
+          next[kind] = toDataUrl(res.data, ct);
+        } catch {
+          // no image or inaccessible - ignore
+        }
+      }
+      if (alive) setMediaUrls(next);
+    }
+    void loadMedia();
+    return () => {
+      alive = false;
+    };
+  }, [q.data?.id]);
 
   const maxDay = useMemo(() => {
     if (!form) return 31;
@@ -135,6 +170,24 @@ export default function MembershipDetailsPage() {
     onError: (e) => setMessage({ type: "err", text: getApiErrorMessage(e) }),
   });
 
+  const uploadMedia = useMutation({
+    mutationFn: async ({ kind, file }: { kind: MediaKind; file: File }) => {
+      const fd = new FormData();
+      fd.append("kind", kind);
+      fd.append("file", file);
+      await api.post("/api/members/me/media", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const res = await api.get<ArrayBuffer>(`/api/members/me/media/${kind}`, { responseType: "arraybuffer" });
+      return { kind, data: res.data, ct: String(res.headers["content-type"] ?? "image/jpeg") };
+    },
+    onSuccess: ({ kind, data, ct }) => {
+      setMediaUrls((m) => ({ ...m, [kind]: toDataUrl(data, ct) }));
+      setMessage({ type: "ok", text: "Image uploaded successfully." });
+    },
+    onError: (e) => setMessage({ type: "err", text: getApiErrorMessage(e) }),
+  });
+
   const titleChoices = useMemo(
     () => mergePicklistWithCurrent(q.data?.title, optionsQ.data?.titles ?? []),
     [q.data?.title, optionsQ.data?.titles]
@@ -163,6 +216,52 @@ export default function MembershipDetailsPage() {
           title and position choices may be incomplete.
         </p>
       ) : null}
+      <section className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-2">
+        <p className="text-sm text-slate-700">
+          <span className="font-medium">Status:</span> {profile.status}
+        </p>
+        <p className="text-sm text-slate-700">
+          <span className="font-medium">Role(s):</span> {profile.roles.join(", ")}
+        </p>
+      </section>
+
+      <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Profile and birthday pictures</h2>
+        <p className="mt-1 text-xs text-slate-500">Upload one profile picture and up to 3 birthday greeting pictures.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {([
+            ["profile", "Profile picture"],
+            ["birthday1", "Birthday picture 1"],
+            ["birthday2", "Birthday picture 2"],
+            ["birthday3", "Birthday picture 3"],
+          ] as [MediaKind, string][]).map(([kind, label]) => (
+            <div key={kind} className="rounded-lg border border-slate-200 p-3">
+              <p className="text-xs font-medium text-slate-700">{label}</p>
+              {mediaUrls[kind] ? (
+                <img
+                  src={mediaUrls[kind]}
+                  alt={label}
+                  className="mt-2 h-36 w-full rounded-md object-cover"
+                />
+              ) : (
+                <div className="mt-2 flex h-36 w-full items-center justify-center rounded-md bg-slate-100 text-xs text-slate-500">
+                  No image
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="mt-2 block w-full text-xs"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  uploadMedia.mutate({ kind, file });
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
       <form
         className="mt-5 space-y-4"
         onSubmit={(e) => {

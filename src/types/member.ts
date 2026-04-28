@@ -25,6 +25,10 @@ export type MemberProfile = {
   status: MemberStatus;
   roles: string[];
   mustChangePassword: boolean;
+  hasProfilePhoto?: boolean;
+  hasBirthdayPhoto1?: boolean;
+  hasBirthdayPhoto2?: boolean;
+  hasBirthdayPhoto3?: boolean;
 };
 
 export type UpdateProfileRequest = {
