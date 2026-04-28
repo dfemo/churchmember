@@ -212,11 +212,17 @@ function SidebarContent({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    // Start simple for non-technical users: show links immediately.
+    const allOpen = Object.fromEntries(visibleSections.map((s) => [s.id, true])) as Record<string, boolean>;
+    setExpandedSections((prev) => (Object.keys(prev).length === 0 ? allOpen : prev));
+  }, [visibleSections]);
+
+  useEffect(() => {
     const activeSection = visibleSections.find((s) =>
       s.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
     );
     if (!activeSection) return;
-    setExpandedSections((prev) => ({ ...prev, [activeSection.id]: true }));
+    setExpandedSections((prev) => (prev[activeSection.id] ? prev : { ...prev, [activeSection.id]: true }));
   }, [pathname, visibleSections]);
 
   return (
