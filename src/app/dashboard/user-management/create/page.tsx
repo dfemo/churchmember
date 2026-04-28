@@ -1,6 +1,7 @@
 "use client";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { notifyErr, notifyOk } from "@/lib/notify";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import { Eye, EyeOff } from "lucide-react";
@@ -45,8 +46,6 @@ export default function CreateUserPage() {
   const [form, setForm] = useState<CreateForm>(emptyForm);
   const [showDefaultPassword, setShowDefaultPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
   const bundleQ = useQuery({
     queryKey: ["profile-field-options-bundle"],
     queryFn: async () => (await api.get<ProfileFieldOptionsBundle>("/api/profile-field-options")).data,
@@ -68,12 +67,12 @@ export default function CreateUserPage() {
       return data;
     },
     onSuccess: async () => {
-      setErr(null);
+      notifyOk("User created successfully.");
       await queryClient.invalidateQueries({ queryKey: ["members-list"] });
       router.push("/dashboard/user-management");
     },
     onError: (e: unknown) => {
-      setErr(getApiErrorMessage(e));
+      notifyErr("Could not create user", getApiErrorMessage(e));
     },
   });
 
@@ -99,19 +98,18 @@ export default function CreateUserPage() {
           className="grid gap-3 md:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
-            setErr(null);
             if (form.defaultPassword !== form.confirmPassword) {
-              setErr("Password and confirmation do not match.");
+              notifyErr("Password mismatch", "Password and confirmation do not match.");
               return;
             }
             if (form.defaultPassword.length < 8) {
-              setErr("Initial password must be at least 8 characters.");
+              notifyErr("Password too short", "Initial password must be at least 8 characters.");
               return;
             }
             const opt = getE164OptionsFromEnv();
             const e164 = toE164Digits(form.phoneNumber, opt);
             if (!e164.ok) {
-              setErr(e164.error);
+              notifyErr("Invalid phone number", e164.error);
               return;
             }
             const body: CreateMemberRequest = {
@@ -129,8 +127,6 @@ export default function CreateUserPage() {
             create.mutate(body);
           }}
         >
-          {err ? <p className="md:col-span-2 text-sm text-rose-700">{err}</p> : null}
-
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-slate-600">Full name</label>
             <input
@@ -296,10 +292,7 @@ export default function CreateUserPage() {
             </Link>
             <button
               type="button"
-              onClick={() => {
-                setForm(emptyForm());
-                setErr(null);
-              }}
+              onClick={() => setForm(emptyForm())}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
               Clear form

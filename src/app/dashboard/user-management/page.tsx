@@ -1,6 +1,7 @@
 "use client";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { notifyErr, notifyInfo, notifyOk } from "@/lib/notify";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import { formatBirthdayListColumn, isBirthdayCalendarToday } from "@/lib/birthday-calendar";
@@ -47,8 +48,6 @@ export default function UserManagementPage() {
   const pageSize = 10;
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
   const [form, setForm] = useState<UpdateMemberRequest | null>(null);
   const [waTemplate, setWaTemplate] = useState(DEFAULT_TEMPLATE);
   const [messageUser, setMessageUser] = useState<MemberListItem | MemberProfile | null>(null);
@@ -83,14 +82,12 @@ export default function UserManagementPage() {
     mutationFn: async (payload: { id: number; body: UpdateMemberRequest }) =>
       api.put(`/api/members/${payload.id}`, payload.body),
     onSuccess: async () => {
-      setErr(null);
-      setOk("User updated successfully.");
+      notifyOk("User updated successfully.");
       await queryClient.invalidateQueries({ queryKey: ["members-list"] });
       if (selectedId !== null) await queryClient.invalidateQueries({ queryKey: ["member", selectedId] });
     },
     onError: (e) => {
-      setOk(null);
-      setErr(getApiErrorMessage(e));
+      notifyErr("Could not save user", getApiErrorMessage(e));
     },
   });
 
@@ -298,8 +295,6 @@ export default function UserManagementPage() {
                         type="button"
                         onClick={() => {
                           setSelectedId(u.id);
-                          setErr(null);
-                          setOk(null);
                           setDrawerOpen(true);
                         }}
                         className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
@@ -405,22 +400,21 @@ export default function UserManagementPage() {
               e.preventDefault();
               if (!selectedId || !selected.data) return;
               if (selected.data.id !== selectedId) {
-                setErr("Editor is out of sync with the selected user. Close the panel and open Edit again.");
-                setOk(null);
+                notifyErr(
+                  "Editor out of sync",
+                  "Close the panel and open Edit again."
+                );
                 return;
               }
               const opt = getE164OptionsFromEnv();
               const e164 = toE164Digits(form.phoneNumber, opt);
               if (!e164.ok) {
-                setErr(e164.error);
-                setOk(null);
+                notifyErr("Invalid phone number", e164.error);
                 return;
               }
               update.mutate({ id: selectedId, body: { ...form, phoneNumber: e164.digits } });
             }}
           >
-            {err ? <p className="md:col-span-2 text-sm text-rose-700">{err}</p> : null}
-            {ok ? <p className="md:col-span-2 text-sm text-emerald-700">{ok}</p> : null}
             <div className="md:col-span-2">
               <label className="block text-xs font-medium text-slate-600">Full name</label>
               <input
@@ -566,8 +560,6 @@ export default function UserManagementPage() {
                 type="button"
                 onClick={() => {
                   setForm(buildFormData(selected.data));
-                  setErr(null);
-                  setOk(null);
                 }}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
@@ -585,9 +577,9 @@ export default function UserManagementPage() {
         template={waTemplate}
         onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
         onWhatsappSent={(info) => {
-          setErr(null);
-          setOk(
-            `WhatsApp API accepted a message to ${info.toInternationalDisplay} (Meta requires digits only in the request, e.g. ${info.toInternationalDisplay.replace(/^\+/, "")} — that is correct). If the person did not receive it: the number must be on WhatsApp; for a new chat you may need an approved template or an open 24h session; in Development add the recipient under your Meta app’s test phone numbers.`
+          notifyInfo(
+            "WhatsApp API accepted the message",
+            `Sent to ${info.toInternationalDisplay}. If they did not receive it: the number must use WhatsApp; new chats may need a template or an open 24h session; in Development add test recipients in Meta.`
           );
         }}
       />

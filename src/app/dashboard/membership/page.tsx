@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
 import Link from "next/link";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
+import { notifyErr, notifyOk } from "@/lib/notify";
 import { DEFAULT_BIRTH_YEAR } from "@/lib/profile-field-options";
 import type { MemberProfile, UpdateProfileRequest } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
@@ -58,18 +59,6 @@ function buildIso(m: string, d: string, y: string): string | null {
   return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
-type MediaKind = "profile" | "birthday1" | "birthday2" | "birthday3";
-
-function toDataUrl(bytes: ArrayBuffer, contentType: string) {
-  let binary = "";
-  const arr = new Uint8Array(bytes);
-  const chunk = 0x8000;
-  for (let i = 0; i < arr.length; i += chunk) {
-    binary += String.fromCharCode(...arr.subarray(i, i + chunk));
-  }
-  return `data:${contentType};base64,${btoa(binary)}`;
-}
-
 export default function MembershipDetailsPage() {
   const { user } = useAuth();
   const isAdmin = Boolean(user?.roles?.includes("Admin"));
@@ -85,9 +74,6 @@ export default function MembershipDetailsPage() {
     title: string;
     position: string;
   } | null>(null);
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const [mediaUrls, setMediaUrls] = useState<Partial<Record<MediaKind, string>>>({});
-
   const q = useQuery({
     queryKey: ["me"],
     queryFn: async () => (await api.get<MemberProfile>("/api/members/me")).data,
@@ -117,28 +103,6 @@ export default function MembershipDetailsPage() {
     });
   }, [q.data]);
 
-  useEffect(() => {
-    let alive = true;
-    async function loadMedia() {
-      const kinds: MediaKind[] = ["profile", "birthday1", "birthday2", "birthday3"];
-      const next: Partial<Record<MediaKind, string>> = {};
-      for (const kind of kinds) {
-        try {
-          const res = await api.get<ArrayBuffer>(`/api/members/me/media/${kind}`, { responseType: "arraybuffer" });
-          const ct = String(res.headers["content-type"] ?? "image/jpeg");
-          next[kind] = toDataUrl(res.data, ct);
-        } catch {
-          // no image or inaccessible - ignore
-        }
-      }
-      if (alive) setMediaUrls(next);
-    }
-    void loadMedia();
-    return () => {
-      alive = false;
-    };
-  }, [q.data?.id]);
-
   const maxDay = useMemo(() => {
     if (!form) return 31;
     const m = Number.parseInt(form.dobMonth, 10);
@@ -164,28 +128,10 @@ export default function MembershipDetailsPage() {
       await api.put<MemberProfile>("/api/members/me", body);
     },
     onSuccess: () => {
-      setMessage({ type: "ok", text: "Membership details updated." });
+      notifyOk("Membership details updated.");
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: (e) => setMessage({ type: "err", text: getApiErrorMessage(e) }),
-  });
-
-  const uploadMedia = useMutation({
-    mutationFn: async ({ kind, file }: { kind: MediaKind; file: File }) => {
-      const fd = new FormData();
-      fd.append("kind", kind);
-      fd.append("file", file);
-      await api.post("/api/members/me/media", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const res = await api.get<ArrayBuffer>(`/api/members/me/media/${kind}`, { responseType: "arraybuffer" });
-      return { kind, data: res.data, ct: String(res.headers["content-type"] ?? "image/jpeg") };
-    },
-    onSuccess: ({ kind, data, ct }) => {
-      setMediaUrls((m) => ({ ...m, [kind]: toDataUrl(data, ct) }));
-      setMessage({ type: "ok", text: "Image uploaded successfully." });
-    },
-    onError: (e) => setMessage({ type: "err", text: getApiErrorMessage(e) }),
+    onError: (e) => notifyErr("Could not save profile", getApiErrorMessage(e)),
   });
 
   const titleChoices = useMemo(
@@ -203,12 +149,21 @@ export default function MembershipDetailsPage() {
   const profile = q.data;
 
   return (
-    <div className="max-w-4xl rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur-xl">
+    <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur-xl">
       <h1 className="text-xl font-semibold text-slate-900">View membership details</h1>
       <p className="mt-1 text-sm text-slate-500">
         {isAdmin
-          ? "Update your name, email, address, date of birth, title, and position."
-          : "Update your name, email, address, and date of birth. Title and position are set by an administrator and shown below."}
+          ? "Update your name, email, address, date of birth, title, and position. Departments are listed below and are edited in User management."
+          : "Update your name, email, address, and date of birth. Title, position, and departments are set by an administrator and shown below."}
+      </p>
+      <p className="mt-3 text-sm">
+        <Link
+          href="/dashboard/membership/pictures"
+          className="font-medium text-violet-700 underline-offset-2 hover:underline"
+        >
+          Picture catalog
+        </Link>
+        <span className="text-slate-500"> — upload profile and birthday photos (mobile-friendly).</span>
       </p>
       {isAdmin && optionsQ.isError ? (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -225,43 +180,6 @@ export default function MembershipDetailsPage() {
         </p>
       </section>
 
-      <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Profile and birthday pictures</h2>
-        <p className="mt-1 text-xs text-slate-500">Upload one profile picture and up to 3 birthday greeting pictures.</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {([
-            ["profile", "Profile picture"],
-            ["birthday1", "Birthday picture 1"],
-            ["birthday2", "Birthday picture 2"],
-            ["birthday3", "Birthday picture 3"],
-          ] as [MediaKind, string][]).map(([kind, label]) => (
-            <div key={kind} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-xs font-medium text-slate-700">{label}</p>
-              {mediaUrls[kind] ? (
-                <img
-                  src={mediaUrls[kind]}
-                  alt={label}
-                  className="mt-2 h-36 w-full rounded-md object-cover"
-                />
-              ) : (
-                <div className="mt-2 flex h-36 w-full items-center justify-center rounded-md bg-slate-100 text-xs text-slate-500">
-                  No image
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                className="mt-2 block w-full text-xs"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  uploadMedia.mutate({ kind, file });
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
       <form
         className="mt-5 space-y-4"
         onSubmit={(e) => {
@@ -272,25 +190,25 @@ export default function MembershipDetailsPage() {
           if (form.dobMonth && form.dobDay) {
             const built = buildIso(form.dobMonth, form.dobDay, form.dobYear);
             if (!built) {
-              setMessage({
-                type: "err",
-                text: "That day does not exist in the selected month. Check your date of birth.",
-              });
+              notifyErr(
+                "Invalid date",
+                "That day does not exist in the selected month. Check your date of birth."
+              );
               return;
             }
             dateOfBirth = built;
           } else if (form.yearSelectedByUser) {
             const y = Number.parseInt(form.dobYear, 10);
             if (Number.isNaN(y)) {
-              setMessage({ type: "err", text: "Please choose a birth year." });
+              notifyErr("Birth year required", "Please choose a birth year.");
               return;
             }
             dateOfBirth = `${y}-01-01`;
           } else {
-            setMessage({
-              type: "err",
-              text: "Please select your birth month and day. (If you only know the year, select it from the year list first.)",
-            });
+            notifyErr(
+              "Date of birth incomplete",
+              "Select month and day, or pick a year from the list first if you only know the year."
+            );
             return;
           }
 
@@ -311,17 +229,6 @@ export default function MembershipDetailsPage() {
           });
         }}
       >
-        {message ? (
-          <p
-            className={`rounded-lg px-3 py-2 text-sm ${
-              message.type === "ok"
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {message.text}
-          </p>
-        ) : null}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">Phone</label>
@@ -521,6 +428,29 @@ export default function MembershipDetailsPage() {
             </div>
           </div>
         )}
+        <div>
+          <span className="block text-sm font-medium text-slate-700">Department(s)</span>
+          <p className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-800">
+            {profile.departments?.length ? profile.departments.join(", ") : "—"}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {isAdmin ? (
+              <>
+                Assign departments in{" "}
+                <Link href="/dashboard/user-management" className="font-medium text-violet-700 underline-offset-2 hover:underline">
+                  User management
+                </Link>
+                . Options come from{" "}
+                <Link href="/dashboard/profile-field-options" className="font-medium text-violet-700 underline-offset-2 hover:underline">
+                  Title &amp; position lists
+                </Link>{" "}
+                (department list).
+              </>
+            ) : (
+              "Ask an administrator if these should change."
+            )}
+          </p>
+        </div>
         <button
           type="submit"
           disabled={mutation.isPending}

@@ -1,6 +1,7 @@
 "use client";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { notifyErr, notifyOk } from "@/lib/notify";
 import { parseMemberExcel } from "@/lib/parse-member-excel";
 import { Eye, EyeOff } from "lucide-react";
 import type { BulkImportMembersRequest, BulkImportMembersResponse } from "@/types/member";
@@ -17,23 +18,24 @@ export default function BulkUploadPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDefaultPassword, setShowDefaultPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [submitErr, setSubmitErr] = useState<string | null>(null);
-
   const bulkMut = useMutation({
     mutationFn: async (body: BulkImportMembersRequest) => {
       const { data } = await api.post<BulkImportMembersResponse>("/api/members/bulk", body);
       return data;
     },
-    onSuccess: async () => {
-      setSubmitErr(null);
+    onSuccess: async (data) => {
       setPendingPayload(null);
       setParsedPreviewCount(0);
       setDefaultPassword("");
       setConfirmPassword("");
+      notifyOk(
+        "Import finished",
+        `Created ${data.createdCount}, failed ${data.failedCount}.`
+      );
       await queryClient.invalidateQueries({ queryKey: ["members-list"] });
     },
     onError: (e: unknown) => {
-      setSubmitErr(getApiErrorMessage(e));
+      notifyErr("Import failed", getApiErrorMessage(e));
     },
   });
 
@@ -163,13 +165,12 @@ export default function BulkUploadPage() {
               type="button"
               disabled={bulkMut.isPending}
               onClick={() => {
-                setSubmitErr(null);
                 if (defaultPassword.length < 8) {
-                  setSubmitErr("Password must be at least 8 characters.");
+                  notifyErr("Password too short", "Password must be at least 8 characters.");
                   return;
                 }
                 if (defaultPassword !== confirmPassword) {
-                  setSubmitErr("Password and confirmation do not match.");
+                  notifyErr("Password mismatch", "Password and confirmation do not match.");
                   return;
                 }
                 bulkMut.mutate({ ...pendingPayload, defaultPassword });
@@ -185,7 +186,6 @@ export default function BulkUploadPage() {
               Cancel
             </Link>
           </div>
-          {submitErr ? <p className="mt-3 text-sm text-rose-700">{submitErr}</p> : null}
         </section>
       ) : null}
 

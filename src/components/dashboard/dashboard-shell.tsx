@@ -7,6 +7,7 @@ import {
   Bell,
   ChevronDown,
   ClipboardList,
+  Images,
   KeyRound,
   LayoutDashboard,
   LogOut,
@@ -27,7 +28,10 @@ type MenuItem = {
   label: string;
   icon: LucideIcon;
   badge?: string;
+  /** Extra indent under section heading (subsection). Default true when omitted. */
   sub?: boolean;
+  /** When true, active only if pathname equals href (no `/href/...` prefix match). */
+  matchExact?: boolean;
 };
 
 type MenuSection = {
@@ -48,7 +52,9 @@ function NavItem({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const active = item.matchExact
+    ? pathname === item.href
+    : pathname === item.href || pathname.startsWith(`${item.href}/`);
   const Icon = item.icon;
   return (
     <Link
@@ -102,8 +108,8 @@ function NavSection({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const activeInSection = section.items.some(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+  const activeInSection = section.items.some((item) =>
+    item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
   );
   const SectionIcon = section.icon;
 
@@ -111,7 +117,12 @@ function NavSection({
     return (
       <section className="space-y-0.5">
         {section.items.map((item) => (
-          <NavItem key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavItem
+            key={item.href}
+            item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
         ))}
       </section>
     );
@@ -140,7 +151,12 @@ function NavSection({
       {expanded ? (
         <nav className="space-y-0.5" aria-label={section.title}>
           {section.items.map((item) => (
-            <NavItem key={item.href} item={{ ...item, sub: true }} collapsed={collapsed} onNavigate={onNavigate} />
+            <NavItem
+              key={item.href}
+              item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
           ))}
         </nav>
       ) : null}
@@ -201,8 +217,20 @@ function SidebarContent({
         title: "Account Management",
         icon: UserCircle,
         items: [
-          { href: "/dashboard/membership", label: "My profile", icon: UserCircle },
-          { href: "/dashboard/password", label: "Change password", icon: KeyRound },
+          {
+            href: "/dashboard/membership",
+            label: "Membership details",
+            icon: UserCircle,
+            sub: false,
+            matchExact: true,
+          },
+          {
+            href: "/dashboard/membership/pictures",
+            label: "Picture catalog",
+            icon: Images,
+            sub: true,
+          },
+          { href: "/dashboard/password", label: "Change password", icon: KeyRound, sub: false },
         ],
       },
     ],
@@ -219,7 +247,9 @@ function SidebarContent({
 
   useEffect(() => {
     const activeSection = visibleSections.find((s) =>
-      s.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+      s.items.some((item) =>
+        item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
+      )
     );
     if (!activeSection) return;
     setExpandedSections((prev) => (prev[activeSection.id] ? prev : { ...prev, [activeSection.id]: true }));

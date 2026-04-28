@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { notifyErr, notifyOk } from "@/lib/notify";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,14 +16,18 @@ export default function DashboardPasswordPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (newPw.length < 8) return setError("New password must be at least 8 characters.");
-    if (newPw !== confirm) return setError("New passwords do not match.");
+    if (newPw.length < 8) {
+      notifyErr("Password too short", "New password must be at least 8 characters.");
+      return;
+    }
+    if (newPw !== confirm) {
+      notifyErr("Password mismatch", "New passwords do not match.");
+      return;
+    }
     setSaving(true);
     try {
       await api.post("/api/auth/change-password", {
@@ -30,9 +35,10 @@ export default function DashboardPasswordPage() {
         newPassword: newPw,
       });
       await refreshMe();
+      notifyOk("Password updated successfully.");
       router.replace("/dashboard");
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      notifyErr("Could not update password", getApiErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -47,9 +53,6 @@ export default function DashboardPasswordPage() {
           : "Set a stronger password to secure your account."}
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        {error ? (
-          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
-        ) : null}
         <div>
           <label className="block text-sm font-medium text-slate-700">Current password</label>
           <div className="mt-1 flex w-full items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 focus-within:border-cyan-400 focus-within:bg-white">

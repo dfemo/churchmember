@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { notifyErr, notifyOk } from "@/lib/notify";
 import type {
   AddProfileFieldOptionRequest,
   ProfileFieldOptionAdminRow,
@@ -17,8 +18,6 @@ export default function ProfileFieldOptionsPage() {
   const queryClient = useQueryClient();
   const [kind, setKind] = useState<"Title" | "Position" | "Department">("Title");
   const [value, setValue] = useState("");
-  const [banner, setBanner] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-
   useEffect(() => {
     if (user && !user.roles?.includes("Admin")) router.replace("/dashboard/member");
   }, [user, router]);
@@ -52,22 +51,22 @@ export default function ProfileFieldOptionsPage() {
   const add = useMutation({
     mutationFn: async (body: AddProfileFieldOptionRequest) => api.post("/api/profile-field-options", body),
     onSuccess: async () => {
-      setBanner({ type: "ok", text: "Option added." });
+      notifyOk("Option added.");
       setValue("");
       await queryClient.invalidateQueries({ queryKey: ["profile-field-options-admin"] });
       await queryClient.invalidateQueries({ queryKey: ["profile-field-options-bundle"] });
     },
-    onError: (e) => setBanner({ type: "err", text: getApiErrorMessage(e) }),
+    onError: (e) => notifyErr("Could not add option", getApiErrorMessage(e)),
   });
 
   const remove = useMutation({
     mutationFn: async (id: number) => api.delete(`/api/profile-field-options/${id}`),
     onSuccess: async () => {
-      setBanner({ type: "ok", text: "Option removed." });
+      notifyOk("Option removed.");
       await queryClient.invalidateQueries({ queryKey: ["profile-field-options-admin"] });
       await queryClient.invalidateQueries({ queryKey: ["profile-field-options-bundle"] });
     },
-    onError: (e) => setBanner({ type: "err", text: getApiErrorMessage(e) }),
+    onError: (e) => notifyErr("Could not remove option", getApiErrorMessage(e)),
   });
 
   if (!user?.roles?.includes("Admin")) {
@@ -91,28 +90,15 @@ export default function ProfileFieldOptionsPage() {
         </p>
       </div>
 
-      {banner ? (
-        <p
-          className={`rounded-lg px-3 py-2 text-sm ${
-            banner.type === "ok"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border border-rose-200 bg-rose-50 text-rose-800"
-          }`}
-        >
-          {banner.text}
-        </p>
-      ) : null}
-
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Add option</h2>
         <form
           className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
-            setBanner(null);
             const v = value.trim();
             if (!v) {
-              setBanner({ type: "err", text: "Enter a value." });
+              notifyErr("Missing label", "Enter a value.");
               return;
             }
             add.mutate({ kind, value: v });
@@ -153,28 +139,19 @@ export default function ProfileFieldOptionsPage() {
         <OptionTable
           title="Titles"
           rows={titles}
-          onDelete={(id) => {
-            setBanner(null);
-            remove.mutate(id);
-          }}
+          onDelete={(id) => remove.mutate(id)}
           deleting={remove.isPending}
         />
         <OptionTable
           title="Positions"
           rows={positions}
-          onDelete={(id) => {
-            setBanner(null);
-            remove.mutate(id);
-          }}
+          onDelete={(id) => remove.mutate(id)}
           deleting={remove.isPending}
         />
         <OptionTable
           title="Departments"
           rows={departments}
-          onDelete={(id) => {
-            setBanner(null);
-            remove.mutate(id);
-          }}
+          onDelete={(id) => remove.mutate(id)}
           deleting={remove.isPending}
         />
       </div>
