@@ -72,29 +72,29 @@ function NavItem({
       title={collapsed ? item.label : undefined}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-3 rounded-lg py-2 text-[13px] font-medium transition-colors",
-        collapsed ? "justify-center px-0" : "px-3",
-        item.sub && !collapsed ? "pl-9" : "",
+        "group flex items-center gap-2 rounded-md py-1.5 text-[12px] font-medium leading-snug transition-colors duration-150",
+        collapsed ? "justify-center px-0" : "px-2",
+        item.sub && !collapsed ? "pl-6" : "",
         active
-          ? "bg-white/[0.12] text-white shadow-[inset_3px_0_0_#34d399]"
-          : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200",
+          ? "bg-emerald-500/15 text-emerald-50 shadow-[inset_2px_0_0_#34d399]"
+          : "text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-200",
       ].join(" ")}
     >
       <span
         className={[
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-colors",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded border border-transparent transition-colors",
           active
-            ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-200"
-            : "bg-zinc-800/60 text-zinc-500 group-hover:text-zinc-300",
+            ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+            : "bg-zinc-800/50 text-zinc-500 group-hover:border-zinc-700/80 group-hover:text-zinc-300",
         ].join(" ")}
       >
-        <Icon className="h-4 w-4" strokeWidth={1.5} />
+        <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
       </span>
       {!collapsed ? (
         <>
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           {item.badge ? (
-            <span className="rounded-md bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200/90">
+            <span className="rounded bg-zinc-800/90 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-emerald-200/90">
               {item.badge}
             </span>
           ) : null}
@@ -125,7 +125,7 @@ function NavSection({
 
   if (collapsed) {
     return (
-      <section className="space-y-0.5">
+      <section className="space-y-px">
         {section.items.map((item) => (
           <NavItem
             key={item.href}
@@ -139,37 +139,60 @@ function NavSection({
   }
 
   return (
-    <section className="space-y-1" aria-labelledby={section.id}>
+    <section
+      className={[
+        "rounded-lg border transition-colors duration-150",
+        expanded || activeInSection
+          ? "border-zinc-700/60 bg-zinc-900/40"
+          : "border-transparent bg-transparent hover:border-zinc-800/80",
+      ].join(" ")}
+      aria-labelledby={section.id}
+    >
       <button
         type="button"
         id={section.id}
+        aria-expanded={expanded}
         onClick={onToggle}
         className={[
-          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] font-semibold tracking-[0.08em] uppercase transition",
+          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-150",
           activeInSection
-            ? "bg-white/[0.08] text-zinc-100"
-            : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200",
+            ? "text-zinc-100"
+            : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300",
+          expanded ? "bg-white/[0.04]" : "",
         ].join(" ")}
       >
-        <SectionIcon className="h-4 w-4" strokeWidth={1.6} />
-        <span className="min-w-0 flex-1 truncate">{section.title}</span>
+        <SectionIcon className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={2} />
+        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-[0.12em]">
+          {section.title}
+        </span>
         <ChevronDown
-          className={["h-4 w-4 transition-transform", expanded ? "rotate-180" : ""].join(" ")}
-          strokeWidth={1.6}
+          className={[
+            "h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform duration-200 ease-out",
+            expanded ? "rotate-180" : "",
+          ].join(" ")}
+          strokeWidth={2}
+          aria-hidden
         />
       </button>
-      {expanded ? (
-        <nav className="space-y-0.5" aria-label={section.title}>
-          {section.items.map((item) => (
-            <NavItem
-              key={item.href}
-              item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
-              collapsed={collapsed}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </nav>
-      ) : null}
+      <div
+        className={[
+          "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        ].join(" ")}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <nav className="space-y-px border-t border-zinc-800/50 px-1.5 pb-1.5 pt-1" aria-label={section.title}>
+            {section.items.map((item) => (
+              <NavItem
+                key={item.href}
+                item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
+                collapsed={collapsed}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </nav>
+        </div>
+      </div>
     </section>
   );
 }
@@ -324,13 +347,12 @@ function SidebarContent({
     return [account, ...rest];
   }, [navSections, isAdmin]);
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  /** Only one section open at a time (accordion). `null` = all collapsed. */
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Start simple for non-technical users: show links immediately.
-    const allOpen = Object.fromEntries(navSectionsOrdered.map((s) => [s.id, true])) as Record<string, boolean>;
-    setExpandedSections((prev) => (Object.keys(prev).length === 0 ? allOpen : prev));
-  }, [navSectionsOrdered]);
+  function toggleSection(sectionId: string) {
+    setExpandedSectionId((prev) => (prev === sectionId ? null : sectionId));
+  }
 
   useEffect(() => {
     const activeSection = navSectionsOrdered.find((s) =>
@@ -338,57 +360,51 @@ function SidebarContent({
         item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
       )
     );
-    if (!activeSection) return;
-    setExpandedSections((prev) => (prev[activeSection.id] ? prev : { ...prev, [activeSection.id]: true }));
+    setExpandedSectionId(activeSection?.id ?? null);
   }, [pathname, navSectionsOrdered]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
         className={[
-          "mb-4 flex items-center gap-3 border-b border-zinc-800/80 px-1 pb-5",
+          "mb-3 flex items-center gap-2.5 border-b border-zinc-800/70 px-0.5 pb-3",
           collapsed ? "flex-col" : "",
         ].join(" ")}
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400/90 to-teal-600 text-sm font-bold tracking-tight text-zinc-950">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-emerald-400/90 to-teal-600 text-xs font-bold tracking-tight text-zinc-950 shadow-sm shadow-emerald-900/20">
           CM
         </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="text-[15px] font-semibold tracking-tight text-white">Church Members</p>
-            <p className="text-xs text-zinc-500">Member & admin portal</p>
+            <p className="text-[13px] font-semibold leading-tight tracking-tight text-white">Church Members</p>
+            <p className="text-[10px] leading-tight text-zinc-500">Member & admin portal</p>
           </div>
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navSectionsOrdered.map((section) => (
           <NavSection
             key={section.id}
             section={section}
             collapsed={collapsed}
-            expanded={Boolean(expandedSections[section.id])}
-            onToggle={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                [section.id]: !prev[section.id],
-              }))
-            }
+            expanded={expandedSectionId === section.id}
+            onToggle={() => toggleSection(section.id)}
             onNavigate={onNavigate}
           />
         ))}
       </div>
 
-      <div className="mt-auto border-t border-zinc-800/80 pt-3">
+      <div className="mt-auto border-t border-zinc-800/70 pt-2">
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md py-1.5 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <PanelLeft
-            className={["h-4 w-4 transition-transform", collapsed ? "rotate-180" : ""].join(" ")}
-            strokeWidth={1.5}
+            className={["h-3.5 w-3.5 transition-transform duration-200", collapsed ? "rotate-180" : ""].join(" ")}
+            strokeWidth={2}
           />
           {!collapsed ? <span>Collapse</span> : null}
         </button>
@@ -409,7 +425,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     router.push("/login");
   }
 
-  const sidebarW = sidebarCollapsed ? "w-[4.5rem]" : "w-64";
+  const sidebarW = sidebarCollapsed ? "w-[3.75rem]" : "w-[14rem]";
 
   return (
     <div className="flex h-svh w-full flex-col overflow-hidden bg-zinc-100 text-zinc-900 antialiased md:flex-row">
@@ -424,7 +440,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/80 bg-zinc-950 p-4 shadow-2xl shadow-zinc-950/40",
+          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/70 bg-zinc-950 p-3 shadow-xl shadow-zinc-950/35",
           "lg:static lg:z-0 lg:shrink-0 lg:shadow-none",
           "transition-[width] duration-200 ease-out",
           sidebarW,
