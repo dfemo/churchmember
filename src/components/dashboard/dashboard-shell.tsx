@@ -72,9 +72,9 @@ function NavItem({
       title={collapsed ? item.label : undefined}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-2 rounded-md py-1.5 text-[12px] font-medium leading-snug transition-colors duration-150",
-        collapsed ? "justify-center px-0" : "px-2",
-        item.sub && !collapsed ? "pl-6" : "",
+        "group flex items-center gap-1.5 rounded-md py-1 text-[10px] font-normal leading-snug transition-colors duration-150",
+        collapsed ? "justify-center px-0" : "px-1.5",
+        item.sub && !collapsed ? "pl-5" : "",
         active
           ? "bg-emerald-500/15 text-emerald-50 shadow-[inset_2px_0_0_#34d399]"
           : "text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-200",
@@ -82,19 +82,19 @@ function NavItem({
     >
       <span
         className={[
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded border border-transparent transition-colors",
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded border border-transparent transition-colors",
           active
             ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
             : "bg-zinc-800/50 text-zinc-500 group-hover:border-zinc-700/80 group-hover:text-zinc-300",
         ].join(" ")}
       >
-        <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+        <Icon className="h-3 w-3" strokeWidth={1.5} />
       </span>
       {!collapsed ? (
         <>
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           {item.badge ? (
-            <span className="rounded bg-zinc-800/90 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-emerald-200/90">
+            <span className="rounded bg-zinc-800/90 px-1 py-px text-[8px] font-normal uppercase tracking-wide text-emerald-200/90">
               {item.badge}
             </span>
           ) : null}
@@ -154,28 +154,28 @@ function NavSection({
         aria-expanded={expanded}
         onClick={onToggle}
         className={[
-          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-150",
+          "flex w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150",
           activeInSection
             ? "text-zinc-100"
             : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300",
           expanded ? "bg-white/[0.04]" : "",
         ].join(" ")}
       >
-        <SectionIcon className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={2} />
-        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-[0.12em]">
+        <SectionIcon className="h-3 w-3 shrink-0 opacity-75" strokeWidth={1.5} />
+        <span className="min-w-0 flex-1 truncate text-[10px] font-light uppercase tracking-[0.1em] text-zinc-400">
           {section.title}
         </span>
         <ChevronDown
           className={[
-            "h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform duration-200 ease-out",
+            "h-3 w-3 shrink-0 text-zinc-600 transition-transform duration-200 ease-out",
             expanded ? "rotate-180" : "",
           ].join(" ")}
-          strokeWidth={2}
+          strokeWidth={1.5}
           aria-hidden
         />
       </button>
       {expanded ? (
-        <nav className="space-y-px border-t border-zinc-800/50 px-1.5 pb-1.5 pt-1" aria-label={section.title}>
+        <nav className="space-y-px border-t border-zinc-800/50 px-1 pb-1 pt-0.5" aria-label={section.title}>
           {section.items.map((item) => (
             <NavItem
               key={item.href}
@@ -232,18 +232,6 @@ function SidebarContent({
             icon: CalendarDays,
             sub: false,
           },
-          {
-            href: "/dashboard/attendant",
-            label: "View metrics",
-            icon: ClipboardList,
-            adminOnly: true,
-          },
-          {
-            href: "/dashboard/attendance/by-service-type",
-            label: "Service type attendance",
-            icon: ListFilter,
-            adminOnly: true,
-          },
         ],
       },
       {
@@ -251,7 +239,15 @@ function SidebarContent({
         title: "Report Management",
         icon: ReceiptText,
         adminOnly: true,
-        items: [{ href: "/dashboard/reports", label: "Reports", icon: ReceiptText }],
+        items: [
+          { href: "/dashboard/reports", label: "Reports", icon: ReceiptText },
+          { href: "/dashboard/attendant", label: "View metrics", icon: ClipboardList },
+          {
+            href: "/dashboard/attendance/by-service-type",
+            label: "Service type attendance",
+            icon: ListFilter,
+          },
+        ],
       },
       {
         id: "nav-request-mgmt",
@@ -359,13 +355,13 @@ function SidebarContent({
           collapsed ? "flex-col" : "",
         ].join(" ")}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-emerald-400/90 to-teal-600 text-xs font-bold tracking-tight text-zinc-950 shadow-sm shadow-emerald-900/20">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-emerald-400/90 to-teal-600 text-[10px] font-medium tracking-tight text-zinc-950 shadow-sm shadow-emerald-900/20">
           CM
         </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold leading-tight tracking-tight text-white">Church Members</p>
-            <p className="text-[10px] leading-tight text-zinc-500">Member & admin portal</p>
+            <p className="text-[11px] font-light leading-tight tracking-tight text-white">Church Members</p>
+            <p className="text-[9px] font-light leading-tight text-zinc-500">Member & admin portal</p>
           </div>
         ) : null}
       </div>
@@ -387,7 +383,7 @@ function SidebarContent({
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center gap-1.5 rounded-md py-1.5 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md py-1 text-[10px] font-normal text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <PanelLeft
@@ -413,7 +409,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     router.push("/login");
   }
 
-  const sidebarW = sidebarCollapsed ? "w-[3.75rem]" : "w-[14rem]";
+  const sidebarW = sidebarCollapsed ? "w-[3.5rem]" : "w-[12.5rem]";
 
   return (
     <div className="flex h-svh w-full flex-col overflow-hidden bg-zinc-100 text-zinc-900 antialiased md:flex-row">
@@ -428,7 +424,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/70 bg-zinc-950 p-3 shadow-xl shadow-zinc-950/35",
+          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/70 bg-zinc-950 p-2.5 font-light shadow-xl shadow-zinc-950/35",
           "lg:static lg:z-0 lg:shrink-0 lg:shadow-none",
           "transition-[width] duration-200 ease-out",
           sidebarW,
@@ -447,21 +443,21 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="z-20 flex h-16 shrink-0 items-center border-b border-zinc-200/90 bg-white/90 px-4 shadow-sm shadow-zinc-900/[0.03] backdrop-blur-md sm:px-5 lg:px-8">
+        <header className="z-20 flex h-14 shrink-0 items-center border-b border-zinc-200/90 bg-white/90 px-4 text-[13px] font-light shadow-sm shadow-zinc-900/[0.03] backdrop-blur-md sm:px-5 lg:px-8">
           <div className="flex w-full min-w-0 items-center gap-3 lg:gap-4">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 lg:hidden"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-normal text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 lg:hidden"
             >
               Menu
             </button>
             <div className="hidden min-w-0 sm:block">
-              <p className="truncate text-sm font-semibold text-zinc-900">
+              <p className="truncate text-xs font-normal text-zinc-900">
                 {isAdmin ? "Admin workspace" : "Member workspace"}
               </p>
-              <p className="truncate text-[11px] text-zinc-500">Welcome back—here is your summary</p>
-              <p className="truncate text-[10px] text-zinc-400" suppressHydrationWarning>
+              <p className="truncate text-[10px] font-light text-zinc-500">Welcome back—here is your summary</p>
+              <p className="truncate text-[9px] font-light text-zinc-400" suppressHydrationWarning>
                 Last sign-in: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
               </p>
             </div>
@@ -470,7 +466,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <label className="relative block">
                 <span className="sr-only">Search</span>
                 <Search
-                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
                   strokeWidth={1.5}
                 />
                 <input
@@ -500,17 +496,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </div>
 
               <div className="flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/90 py-1 pl-1.5 pr-1.5 shadow-sm">
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-700 text-xs font-semibold text-white">
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-700 text-[10px] font-normal text-white">
                   {(user?.fullName ?? "U").charAt(0).toUpperCase()}
                 </span>
                 <div className="hidden min-w-0 leading-tight sm:block">
-                  <p className="truncate text-xs font-semibold text-zinc-900">{user?.fullName ?? "User"}</p>
-                  <p className="truncate text-[10px] text-zinc-500">{user?.roles?.join(", ") || "Member"}</p>
+                  <p className="truncate text-[11px] font-normal text-zinc-900">{user?.fullName ?? "User"}</p>
+                  <p className="truncate text-[9px] font-light text-zinc-500">{user?.roles?.join(", ") || "Member"}</p>
                 </div>
                 <button
                   type="button"
                   onClick={signOut}
-                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium text-zinc-600 transition hover:bg-white hover:text-zinc-900"
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[10px] font-normal text-zinc-600 transition hover:bg-white hover:text-zinc-900"
                 >
                   <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
                   <span className="hidden lg:inline">Log out</span>
@@ -520,7 +516,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="border-b border-zinc-200/60 bg-zinc-50/80 px-4 py-1.5 text-center text-[11px] text-zinc-500 sm:px-8 sm:text-left md:hidden">
+        <div className="border-b border-zinc-200/60 bg-zinc-50/80 px-4 py-1 text-center text-[10px] font-light text-zinc-500 sm:px-8 sm:text-left md:hidden">
           Last sign-in: {lastLoginAt ? new Date(lastLoginAt).toLocaleString() : "Not available"}
         </div>
 

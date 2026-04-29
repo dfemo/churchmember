@@ -20,8 +20,7 @@
 }
 
 html {
-  /* Slightly smaller root than 100% so rem-based UI scales down on desktop & mobile */
-  font-size: 85%;
+  font-size: 82%;
   font-weight: 300;
 }
 
@@ -30,8 +29,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: inherit;
-  /* ~11px at typical settings (85% × 0.8125 × 16px) — thin / compact */
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
