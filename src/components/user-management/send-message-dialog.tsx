@@ -36,6 +36,7 @@ export function SendMessageDialog({
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const [body, setBody] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [waSending, setWaSending] = useState(false);
   const [waError, setWaError] = useState<string | null>(null);
 
@@ -50,6 +51,7 @@ export function SendMessageDialog({
   useEffect(() => {
     if (open && user) {
       setBody(personalizeWhatsappMessage(template, user));
+      setImageUrl("");
       setWaError(null);
     }
   }, [open, user, template]);
@@ -69,6 +71,7 @@ export function SendMessageDialog({
       const { data } = await api.post<SendWhatsappApiResponse>("/api/messages/whatsapp", {
         toPhoneNumber: e164,
         message: body,
+        imageUrl: imageUrl.trim() || null,
       });
       onPersistTemplate();
       onWhatsappSent?.({
@@ -80,7 +83,7 @@ export function SendMessageDialog({
     } finally {
       setWaSending(false);
     }
-  }, [user, e164, body, onPersistTemplate, onWhatsappSent, onClose]);
+  }, [user, e164, body, imageUrl, onPersistTemplate, onWhatsappSent, onClose]);
 
   const sendSms = useCallback(() => {
     if (!user || !e164 || !body.trim()) return;
@@ -177,6 +180,24 @@ export function SendMessageDialog({
             <p className="mt-1 text-[11px] text-slate-500">
               Template placeholders (e.g. <code className="rounded bg-slate-100 px-0.5">{"{{name}}"}</code>) were
               filled from the list above. Edit the text as needed.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="msg-image" className="block text-xs font-medium text-slate-600">
+              Image URL (optional)
+            </label>
+            <input
+              id="msg-image"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              For Twilio templates, this is sent as variable <code className="rounded bg-slate-100 px-0.5">{"{{2}}"}</code>
+              by default (configurable on API).
             </p>
           </div>
         </div>
