@@ -174,25 +174,18 @@ function NavSection({
           aria-hidden
         />
       </button>
-      <div
-        className={[
-          "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
-          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        ].join(" ")}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <nav className="space-y-px border-t border-zinc-800/50 px-1.5 pb-1.5 pt-1" aria-label={section.title}>
-            {section.items.map((item) => (
-              <NavItem
-                key={item.href}
-                item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
-                collapsed={collapsed}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </nav>
-        </div>
-      </div>
+      {expanded ? (
+        <nav className="space-y-px border-t border-zinc-800/50 px-1.5 pb-1.5 pt-1" aria-label={section.title}>
+          {section.items.map((item) => (
+            <NavItem
+              key={item.href}
+              item={{ ...item, sub: item.sub !== undefined ? item.sub : true }}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </nav>
+      ) : null}
     </section>
   );
 }
@@ -321,31 +314,27 @@ function SidebarContent({
     ],
     []
   );
-  const visibleSections = sections.filter((s) => {
-    if (s.adminOnly && !isAdmin) return false;
-    if (s.memberOnly && isAdmin) return false;
-    return true;
-  });
-  const navSections = useMemo(
-    () =>
-      visibleSections
-        .map((s) => ({
-          ...s,
-          items: s.items.filter((item) => !item.adminOnly || isAdmin),
-        }))
-        .filter((s) => s.items.length > 0),
-    [visibleSections, isAdmin]
-  );
 
-  /** Members: Account Management first; admins keep workflow order (dashboard, users, …). */
+  /** Single memoized chain — avoids new array refs every render (which was resetting accordion state). */
   const navSectionsOrdered = useMemo(() => {
-    if (isAdmin) return navSections;
-    const idx = navSections.findIndex((s) => s.id === "nav-account");
-    if (idx <= 0) return navSections;
-    const account = navSections[idx]!;
-    const rest = navSections.filter((_, i) => i !== idx);
+    const visible = sections.filter((s) => {
+      if (s.adminOnly && !isAdmin) return false;
+      if (s.memberOnly && isAdmin) return false;
+      return true;
+    });
+    const nav = visible
+      .map((s) => ({
+        ...s,
+        items: s.items.filter((item) => !item.adminOnly || isAdmin),
+      }))
+      .filter((s) => s.items.length > 0);
+    if (isAdmin) return nav;
+    const idx = nav.findIndex((s) => s.id === "nav-account");
+    if (idx <= 0) return nav;
+    const account = nav[idx]!;
+    const rest = nav.filter((_, i) => i !== idx);
     return [account, ...rest];
-  }, [navSections, isAdmin]);
+  }, [sections, isAdmin]);
 
   /** Only one section open at a time (accordion). `null` = all collapsed. */
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
@@ -354,6 +343,7 @@ function SidebarContent({
     setExpandedSectionId((prev) => (prev === sectionId ? null : sectionId));
   }
 
+  /** Sync open section to the route when URL or role changes — stable `navSectionsOrdered` avoids wiping manual toggles every paint. */
   useEffect(() => {
     const activeSection = navSectionsOrdered.find((s) =>
       s.items.some((item) =>
@@ -361,7 +351,7 @@ function SidebarContent({
       )
     );
     setExpandedSectionId(activeSection?.id ?? null);
-  }, [pathname, navSectionsOrdered]);
+  }, [pathname, isAdmin, navSectionsOrdered]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
