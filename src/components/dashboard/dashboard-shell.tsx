@@ -5,11 +5,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bell,
+  CalendarDays,
   ChevronDown,
   ClipboardList,
   Images,
   KeyRound,
   LayoutDashboard,
+  ListFilter,
   LogOut,
   PanelLeft,
   ReceiptText,
@@ -32,6 +34,8 @@ type MenuItem = {
   sub?: boolean;
   /** When true, active only if pathname equals href (no `/href/...` prefix match). */
   matchExact?: boolean;
+  /** When true, only administrators see this link. */
+  adminOnly?: boolean;
 };
 
 type MenuSection = {
@@ -199,10 +203,31 @@ function SidebarContent({
         id: "nav-attendance",
         title: "Attendance Management",
         icon: ClipboardList,
-        adminOnly: true,
         items: [
-          { href: "/dashboard/attendant", label: "View metrics", icon: ClipboardList },
-          { href: "/dashboard/reports", label: "View growth", icon: BarChart3 },
+          {
+            href: "/dashboard/attendance/sunday-service",
+            label: "Sunday service",
+            icon: CalendarDays,
+            sub: false,
+          },
+          {
+            href: "/dashboard/attendant",
+            label: "View metrics",
+            icon: ClipboardList,
+            adminOnly: true,
+          },
+          {
+            href: "/dashboard/reports",
+            label: "View growth",
+            icon: BarChart3,
+            adminOnly: true,
+          },
+          {
+            href: "/dashboard/attendance/by-service-type",
+            label: "Service type attendance",
+            icon: ListFilter,
+            adminOnly: true,
+          },
         ],
       },
       {
@@ -237,23 +262,33 @@ function SidebarContent({
     []
   );
   const visibleSections = sections.filter((s) => (s.adminOnly ? isAdmin : true));
+  const navSections = useMemo(
+    () =>
+      visibleSections
+        .map((s) => ({
+          ...s,
+          items: s.items.filter((item) => !item.adminOnly || isAdmin),
+        }))
+        .filter((s) => s.items.length > 0),
+    [visibleSections, isAdmin]
+  );
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Start simple for non-technical users: show links immediately.
-    const allOpen = Object.fromEntries(visibleSections.map((s) => [s.id, true])) as Record<string, boolean>;
+    const allOpen = Object.fromEntries(navSections.map((s) => [s.id, true])) as Record<string, boolean>;
     setExpandedSections((prev) => (Object.keys(prev).length === 0 ? allOpen : prev));
-  }, [visibleSections]);
+  }, [navSections]);
 
   useEffect(() => {
-    const activeSection = visibleSections.find((s) =>
+    const activeSection = navSections.find((s) =>
       s.items.some((item) =>
         item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
       )
     );
     if (!activeSection) return;
     setExpandedSections((prev) => (prev[activeSection.id] ? prev : { ...prev, [activeSection.id]: true }));
-  }, [pathname, visibleSections]);
+  }, [pathname, navSections]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -275,7 +310,7 @@ function SidebarContent({
       </div>
 
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {visibleSections.map((section) => (
+        {navSections.map((section) => (
           <NavSection
             key={section.id}
             section={section}

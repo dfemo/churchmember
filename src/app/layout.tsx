@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Geist_Mono, Lexend } from "next/font/google";
 import { AppProviders } from "@/providers/app-providers";
-import "@fontsource-variable/mona-sans/wght.css";
 import "./globals.css";
+
+const lexend = Lexend({
+  variable: "--font-lexend",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -22,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistMono.variable} h-full font-sans antialiased`}
+      className={`${lexend.variable} ${geistMono.variable} h-full font-sans antialiased`}
     >
       <body className="min-h-full flex flex-col bg-stone-50 text-stone-900">
         <AppProviders>{children}</AppProviders>

@@ -8,8 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Mona Sans (see @fontsource-variable/mona-sans in layout) */
-  --font-sans: "Mona Sans Variable", system-ui, sans-serif;
+  --font-sans: var(--font-lexend), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -24,8 +23,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.875rem; /* 14px — small default; headings use explicit sizes / utilities */
-  line-height: 1.45;
+  /* 12px at default root (16px): 12 ÷ 16 = 0.75rem; headings keep explicit sizes / utilities */
+  font-size: 0.75rem;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Sonner portal above dashboard chrome (sidebar/header use z-40–50) */

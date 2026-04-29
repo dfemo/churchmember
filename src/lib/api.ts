@@ -18,7 +18,9 @@ export function setApiAuthToken(token: string | null) {
 
 export function getApiErrorMessage(err: unknown): string {
   if (isAxiosError(err)) {
-    const d = err.response?.data as
+    const raw = err.response?.data;
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+    const d = raw as
       | { detail?: string; title?: string; errors?: Record<string, string[]> }
       | undefined;
     if (d?.errors && Object.keys(d.errors).length) {
