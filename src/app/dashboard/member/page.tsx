@@ -1,9 +1,13 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
+import type { AttendanceRecord } from "@/types/attendance";
 import type { MemberProfile } from "@/types/member";
 import { useQuery } from "@tanstack/react-query";
+import { CalendarDays } from "lucide-react";
+import Link from "next/link";
+import { useMemo } from "react";
 
 export default function MemberDashboardPage() {
   const { user, lastLoginAt } = useAuth();
@@ -11,6 +15,19 @@ export default function MemberDashboardPage() {
     queryKey: ["me"],
     queryFn: async () => (await api.get<MemberProfile>("/api/members/me")).data,
   });
+
+  const attendanceQuery = useQuery({
+    queryKey: ["attendance", "me"],
+    queryFn: async () => (await api.get<AttendanceRecord[]>("/api/attendance/me")).data,
+  });
+
+  const sundayAttendance = useMemo(() => {
+    const list = attendanceQuery.data ?? [];
+    return list
+      .filter((r) => r.kind === "ChurchService" && !r.eventName && r.sundayServiceMode != null)
+      .sort((a, b) => (a.attendanceDate < b.attendanceDate ? 1 : -1))
+      .slice(0, 12);
+  }, [attendanceQuery.data]);
 
   return (
     <div className="space-y-5">
@@ -33,6 +50,48 @@ export default function MemberDashboardPage() {
           <p className="text-xs uppercase tracking-wider text-emerald-600">Membership status</p>
           <p className="mt-2 text-base font-semibold text-slate-900">{profile.data?.status ?? "Loading…"}</p>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700">
+              <CalendarDays className="h-5 w-5" strokeWidth={1.5} />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Sunday attendance</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Recent Sundays you marked as on-site or online.</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/attendance/sunday-service"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            Record attendance
+          </Link>
+        </div>
+
+        {attendanceQuery.isLoading ? (
+          <p className="mt-4 text-sm text-slate-500">Loading attendance…</p>
+        ) : attendanceQuery.isError ? (
+          <p className="mt-4 text-sm text-red-600">{getApiErrorMessage(attendanceQuery.error)}</p>
+        ) : sundayAttendance.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-600">
+            No entries yet. Use <span className="font-medium text-slate-800">Record attendance</span> after a Sunday
+            service.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100 pt-2">
+            {sundayAttendance.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                <span className="font-medium text-slate-900">{r.attendanceDate}</span>
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                  {r.sundayServiceMode === "Online" ? "Online" : "On-site"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
