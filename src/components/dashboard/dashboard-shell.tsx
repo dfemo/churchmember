@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 
 type MenuItem = {
   href: string;
@@ -239,12 +239,6 @@ function SidebarContent({
             adminOnly: true,
           },
           {
-            href: "/dashboard/reports",
-            label: "View growth",
-            icon: BarChart3,
-            adminOnly: true,
-          },
-          {
             href: "/dashboard/attendance/by-service-type",
             label: "Service type attendance",
             icon: ListFilter,
@@ -336,22 +330,26 @@ function SidebarContent({
     return [account, ...rest];
   }, [sections, isAdmin]);
 
-  /** Only one section open at a time (accordion). `null` = all collapsed. */
-  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
-
-  function toggleSection(sectionId: string) {
-    setExpandedSectionId((prev) => (prev === sectionId ? null : sectionId));
-  }
-
-  /** Sync open section to the route when URL or role changes — stable `navSectionsOrdered` avoids wiping manual toggles every paint. */
-  useEffect(() => {
-    const activeSection = navSectionsOrdered.find((s) =>
+  /** Which section contains the current route (for syncing after navigation only). */
+  const routeActiveSectionId = useMemo(() => {
+    const active = navSectionsOrdered.find((s) =>
       s.items.some((item) =>
         item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
       )
     );
-    setExpandedSectionId(activeSection?.id ?? null);
-  }, [pathname, isAdmin, navSectionsOrdered]);
+    return active?.id ?? null;
+  }, [pathname, navSectionsOrdered]);
+
+  /** Accordion: only one open. Sync from route only when `routeActiveSectionId` changes (navigation), not when toggling. */
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(() => routeActiveSectionId);
+
+  useLayoutEffect(() => {
+    setExpandedSectionId(routeActiveSectionId);
+  }, [routeActiveSectionId]);
+
+  function toggleSection(sectionId: string) {
+    setExpandedSectionId((prev) => (prev === sectionId ? null : sectionId));
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
