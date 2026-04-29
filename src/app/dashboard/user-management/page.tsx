@@ -574,7 +574,6 @@ export default function UserManagementPage() {
         open={messageUser !== null}
         onClose={() => setMessageUser(null)}
         user={messageUser}
-        template={waTemplate}
         onPersistTemplate={() => setStoredWhatsappTemplate(waTemplate)}
         onWhatsappSent={(info) => {
           notifyInfo(

@@ -2,7 +2,7 @@
 
 import { api, getApiErrorMessage } from "@/lib/api";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
-import { openSmsToPhone, personalizeWhatsappMessage } from "@/lib/whatsapp";
+import { openSmsToPhone } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile } from "@/types/member";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -18,7 +18,6 @@ type SendMessageDialogProps = {
   open: boolean;
   onClose: () => void;
   user: Recipient | null;
-  template: string;
   /** When using Open SMS, keep template saved in the browser (same as before). */
   onPersistTemplate: () => void;
   /** Meta stores recipients as digits only; display uses + here for clarity. */
@@ -29,7 +28,6 @@ export function SendMessageDialog({
   open,
   onClose,
   user,
-  template,
   onPersistTemplate,
   onWhatsappSent,
 }: SendMessageDialogProps) {
@@ -50,11 +48,11 @@ export function SendMessageDialog({
 
   useEffect(() => {
     if (open && user) {
-      setBody(personalizeWhatsappMessage(template, user));
+      setBody(user.fullName.trim());
       setImageUrl("");
       setWaError(null);
     }
-  }, [open, user, template]);
+  }, [open, user]);
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
@@ -178,8 +176,7 @@ export function SendMessageDialog({
               placeholder="Write your message…"
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              Template placeholders (e.g. <code className="rounded bg-slate-100 px-0.5">{"{{name}}"}</code>) were
-              filled from the list above. Edit the text as needed.
+              Starts with the member&apos;s full name; edit the text as needed.
             </p>
           </div>
 

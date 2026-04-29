@@ -35,6 +35,12 @@ body {
   text-size-adjust: 100%;
 }
 
+@media (min-width: 768px) {
+  body {
+    font-size: 0.85rem;
+  }
+}
+
 /* Sonner portal above dashboard chrome (sidebar/header use z-40–50) */
 [data-sonner-toaster] {
   z-index: 9999 !important;
