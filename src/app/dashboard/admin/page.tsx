@@ -5,6 +5,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import type { DashboardStatsResponse } from "@/types/member";
 import { useQuery } from "@tanstack/react-query";
 import { Gift } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -84,6 +85,35 @@ export default function AdminDashboardPage() {
           </button>
         </div>
       ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link
+          href="/dashboard/requests/prayers"
+          className={[
+            "rounded-2xl border p-5 shadow-sm transition hover:opacity-95",
+            (q.data?.pendingPrayerRequests ?? 0) > 0
+              ? "border-amber-400 bg-amber-50 ring-2 ring-amber-200/80"
+              : "border-slate-200 bg-white/90",
+          ].join(" ")}
+        >
+          <p className="text-xs uppercase tracking-wider text-slate-600">Prayer requests (pending)</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{q.data?.pendingPrayerRequests ?? "—"}</p>
+          <p className="mt-2 text-xs font-medium text-violet-700">Open Prayer Unit queue →</p>
+        </Link>
+        <Link
+          href="/dashboard/requests/member-views"
+          className={[
+            "rounded-2xl border p-5 shadow-sm transition hover:opacity-95",
+            (q.data?.memberViewsAwaitingResponse ?? 0) > 0
+              ? "border-amber-400 bg-amber-50 ring-2 ring-amber-200/80"
+              : "border-slate-200 bg-white/90",
+          ].join(" ")}
+        >
+          <p className="text-xs uppercase tracking-wider text-slate-600">Member views (awaiting reply)</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{q.data?.memberViewsAwaitingResponse ?? "—"}</p>
+          <p className="mt-2 text-xs font-medium text-violet-700">Respond to members →</p>
+        </Link>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100 p-5 shadow-sm">

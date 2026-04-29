@@ -8,12 +8,16 @@ import {
   CalendarDays,
   ChevronDown,
   ClipboardList,
+  HeartHandshake,
   Images,
+  Inbox,
   KeyRound,
   LayoutDashboard,
   ListFilter,
   LogOut,
+  MessagesSquare,
   PanelLeft,
+  PenLine,
   ReceiptText,
   Search,
   Settings,
@@ -44,6 +48,8 @@ type MenuSection = {
   icon: LucideIcon;
   items: MenuItem[];
   adminOnly?: boolean;
+  /** When true, only non-admin members see this section (hidden from admins). */
+  memberOnly?: boolean;
 };
 
 function NavItem({
@@ -238,6 +244,37 @@ function SidebarContent({
         items: [{ href: "/dashboard/reports", label: "Reports", icon: ReceiptText }],
       },
       {
+        id: "nav-request-mgmt",
+        title: "Request Management",
+        icon: Inbox,
+        adminOnly: true,
+        items: [
+          { href: "/dashboard/requests/prayers", label: "Prayer requests", icon: HeartHandshake },
+          { href: "/dashboard/requests/member-views", label: "Member views", icon: MessagesSquare },
+        ],
+      },
+      {
+        id: "nav-views",
+        title: "View & Opinions",
+        icon: MessagesSquare,
+        memberOnly: true,
+        items: [{ href: "/dashboard/views/share", label: "Share your view", icon: PenLine, sub: false }],
+      },
+      {
+        id: "nav-prayer",
+        title: "Prayer",
+        icon: HeartHandshake,
+        memberOnly: true,
+        items: [
+          {
+            href: "/dashboard/prayer-requests",
+            label: "Prayer & intercession",
+            icon: HeartHandshake,
+            sub: false,
+          },
+        ],
+      },
+      {
         id: "nav-account",
         title: "Account Management",
         icon: UserCircle,
@@ -261,7 +298,11 @@ function SidebarContent({
     ],
     []
   );
-  const visibleSections = sections.filter((s) => (s.adminOnly ? isAdmin : true));
+  const visibleSections = sections.filter((s) => {
+    if (s.adminOnly && !isAdmin) return false;
+    if (s.memberOnly && isAdmin) return false;
+    return true;
+  });
   const navSections = useMemo(
     () =>
       visibleSections
@@ -272,23 +313,34 @@ function SidebarContent({
         .filter((s) => s.items.length > 0),
     [visibleSections, isAdmin]
   );
+
+  /** Members: Account Management first; admins keep workflow order (dashboard, users, …). */
+  const navSectionsOrdered = useMemo(() => {
+    if (isAdmin) return navSections;
+    const idx = navSections.findIndex((s) => s.id === "nav-account");
+    if (idx <= 0) return navSections;
+    const account = navSections[idx]!;
+    const rest = navSections.filter((_, i) => i !== idx);
+    return [account, ...rest];
+  }, [navSections, isAdmin]);
+
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Start simple for non-technical users: show links immediately.
-    const allOpen = Object.fromEntries(navSections.map((s) => [s.id, true])) as Record<string, boolean>;
+    const allOpen = Object.fromEntries(navSectionsOrdered.map((s) => [s.id, true])) as Record<string, boolean>;
     setExpandedSections((prev) => (Object.keys(prev).length === 0 ? allOpen : prev));
-  }, [navSections]);
+  }, [navSectionsOrdered]);
 
   useEffect(() => {
-    const activeSection = navSections.find((s) =>
+    const activeSection = navSectionsOrdered.find((s) =>
       s.items.some((item) =>
         item.matchExact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
       )
     );
     if (!activeSection) return;
     setExpandedSections((prev) => (prev[activeSection.id] ? prev : { ...prev, [activeSection.id]: true }));
-  }, [pathname, navSections]);
+  }, [pathname, navSectionsOrdered]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -310,7 +362,7 @@ function SidebarContent({
       </div>
 
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {navSections.map((section) => (
+        {navSectionsOrdered.map((section) => (
           <NavSection
             key={section.id}
             section={section}

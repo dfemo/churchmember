@@ -121,4 +121,6 @@ export type DashboardStatsResponse = {
   inactiveMembers: number;
   todaysBirthdays: BirthdayPersonResponse[];
   upcomingBirthdaysNext7Days: BirthdayPersonResponse[];
+  pendingPrayerRequests: number;
+  memberViewsAwaitingResponse: number;
 };
