@@ -7,6 +7,7 @@ const lexend = Lexend({
   variable: "--font-lexend",
   subsets: ["latin"],
   display: "swap",
+  weight: ["300", "400", "500", "600"],
 });
 
 const geistMono = Geist_Mono({
