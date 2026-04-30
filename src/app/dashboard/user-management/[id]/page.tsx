@@ -76,6 +76,8 @@ export default function UserProfileViewPage() {
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm md:grid-cols-2">
         <Field label="Full name" value={m.fullName} />
         <Field label="Phone" value={m.phoneNumber} />
+        <Field label="Parent user" value={m.parentFullName || "-"} />
+        <Field label="Parent phone" value={m.parentPhoneNumber || "-"} />
         <Field label="Email" value={m.email || "-"} />
         <Field label="Date of birth" value={m.dateOfBirth ? m.dateOfBirth.slice(0, 10) : "-"} />
         <Field label="Role(s)" value={m.roles.join(", ")} />
@@ -87,6 +89,22 @@ export default function UserProfileViewPage() {
           <p className="text-xs font-medium text-slate-600">Address</p>
           <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">{m.address || "-"}</p>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Family relationship</h2>
+        {!m.children?.length ? (
+          <p className="mt-2 text-sm text-slate-500">No children assigned.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {m.children.map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <span className="text-sm font-medium text-slate-800">{c.fullName}</span>
+                <span className="text-xs font-mono text-slate-500">{c.phoneNumber || "-"}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">

@@ -119,6 +119,11 @@ export function SendMessageDialog({
                 <span className="ml-1 font-mono text-slate-500">· {user.phoneNumber}</span>
               ) : null}
             </p>
+            {!e164 && parentFallbackPhone ? (
+              <span className="mt-1 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                Sending to parent
+              </span>
+            ) : null}
             {e164 ? (
               <p className="mt-1 text-[11px] leading-relaxed text-emerald-950">
                 <span className="font-semibold">International:</span>{" "}
