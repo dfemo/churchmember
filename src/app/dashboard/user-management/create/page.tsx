@@ -13,6 +13,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+/** Ids to hide from spouse picker (father/mother reduce mistaken duplicates). */
+function familyExcludeForSpouse(fatherId: number | null, motherId: number | null): number[] {
+  const s = new Set<number>();
+  if (fatherId != null) s.add(fatherId);
+  if (motherId != null) s.add(motherId);
+  return Array.from(s);
+}
+
 type CreateForm = {
   fullName: string;
   phoneNumber: string;
@@ -25,6 +33,8 @@ type CreateForm = {
   role: "Admin" | "Member";
   fatherUserId: number | null;
   motherUserId: number | null;
+  spouseUserId: number | null;
+  siblingUserIds: number[];
   defaultPassword: string;
   confirmPassword: string;
 };
@@ -41,6 +51,8 @@ const emptyForm = (): CreateForm => ({
   role: "Member",
   fatherUserId: null,
   motherUserId: null,
+  spouseUserId: null,
+  siblingUserIds: [],
   defaultPassword: "",
   confirmPassword: "",
 });
@@ -51,6 +63,7 @@ export default function CreateUserPage() {
   const [form, setForm] = useState<CreateForm>(emptyForm);
   const [showDefaultPassword, setShowDefaultPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [siblingSearch, setSiblingSearch] = useState("");
   const bundleQ = useQuery({
     queryKey: ["profile-field-options-bundle"],
     queryFn: async () => (await api.get<ProfileFieldOptionsBundle>("/api/profile-field-options")).data,
@@ -143,6 +156,8 @@ export default function CreateUserPage() {
               role: form.role,
               fatherUserId: form.fatherUserId,
               motherUserId: form.motherUserId,
+              spouseUserId: form.spouseUserId,
+              ...(form.siblingUserIds.length > 0 ? { siblingUserIds: form.siblingUserIds } : {}),
               defaultPassword: form.defaultPassword,
             };
             create.mutate(body);
@@ -175,6 +190,53 @@ export default function CreateUserPage() {
               onChange={(id) => setForm((f) => ({ ...f, motherUserId: id }))}
               hint="Type to filter by name."
             />
+            <SearchableMemberSelect
+              fieldId="create-family-spouse"
+              label="Spouse / partner (optional)"
+              members={membersQ.data ?? []}
+              value={form.spouseUserId}
+              onChange={(id) => setForm((f) => ({ ...f, spouseUserId: id }))}
+              excludeIds={familyExcludeForSpouse(form.fatherUserId, form.motherUserId)}
+              hint="Optional. Cannot be the same person as father or mother."
+            />
+            <label className="mt-2 block text-xs font-medium text-slate-700">Siblings (optional)</label>
+            <input
+              type="search"
+              placeholder="Search sibling names…"
+              autoComplete="off"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              value={siblingSearch}
+              onChange={(e) => setSiblingSearch(e.target.value)}
+            />
+            <div className="mt-2 max-h-36 space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2">
+              {(membersQ.data ?? [])
+                .filter((u) => {
+                  const q = siblingSearch.trim().toLowerCase();
+                  return !q || u.fullName.toLowerCase().includes(q);
+                })
+                .filter((u) => u.id !== form.fatherUserId && u.id !== form.motherUserId && u.id !== form.spouseUserId)
+                .map((u) => {
+                  const checked = form.siblingUserIds.includes(u.id);
+                  return (
+                    <label key={u.id} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-violet-50">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = new Set(f.siblingUserIds);
+                            if (e.target.checked) next.add(u.id);
+                            else next.delete(u.id);
+                            return { ...f, siblingUserIds: Array.from(next).sort((a, b) => a - b) };
+                          })
+                        }
+                      />
+                      <span>{u.fullName}</span>
+                    </label>
+                  );
+                })}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-600">Select any existing members who are siblings of this person.</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600">Email</label>

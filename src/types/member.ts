@@ -146,6 +146,8 @@ export type CreateMemberRequest = {
   fatherUserId?: number | null;
   motherUserId?: number | null;
   parentUserId?: number | null;
+  spouseUserId?: number | null;
+  siblingUserIds?: number[];
 };
 
 export type BirthdayPersonResponse = {
