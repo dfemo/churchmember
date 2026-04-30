@@ -259,7 +259,10 @@ export default function UserManagementPage() {
                 <th className="px-4 py-3 text-left font-medium">Title</th>
                 <th className="px-4 py-3 text-left font-medium">Position</th>
                 <th className="px-4 py-3 text-left font-medium">Department</th>
-                <th className="px-4 py-3 text-left font-medium">Parent</th>
+                <th className="px-4 py-3 text-left font-medium max-w-[7rem]">Father</th>
+                <th className="px-4 py-3 text-left font-medium max-w-[7rem]">Mother</th>
+                <th className="px-4 py-3 text-left font-medium max-w-[7rem]">Spouse</th>
+                <th className="px-4 py-3 text-left font-medium max-w-[9rem]">Siblings</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -303,7 +306,26 @@ export default function UserManagementPage() {
                   <td className="px-4 py-3">{u.title ?? "-"}</td>
                   <td className="px-4 py-3">{u.position ?? "-"}</td>
                   <td className="px-4 py-3">{u.departments?.length ? u.departments.join(", ") : "-"}</td>
-                  <td className="px-4 py-3">{u.parentFullName ?? "-"}</td>
+                  <td className="max-w-[7rem] px-4 py-3 align-top">
+                    <span className="line-clamp-2 break-words" title={u.fatherFullName ?? ""}>
+                      {u.fatherFullName ?? "-"}
+                    </span>
+                  </td>
+                  <td className="max-w-[7rem] px-4 py-3 align-top">
+                    <span className="line-clamp-2 break-words" title={u.motherFullName ?? ""}>
+                      {u.motherFullName ?? "-"}
+                    </span>
+                  </td>
+                  <td className="max-w-[7rem] px-4 py-3 align-top">
+                    <span className="line-clamp-2 break-words" title={u.spouseFullName ?? ""}>
+                      {u.spouseFullName ?? "-"}
+                    </span>
+                  </td>
+                  <td className="max-w-[9rem] px-4 py-3 align-top text-xs leading-snug">
+                    <span className="line-clamp-3 break-words" title={u.siblingsSummary ?? ""}>
+                      {u.siblingsSummary?.trim() ? u.siblingsSummary : "-"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
                       <Link
@@ -339,7 +361,7 @@ export default function UserManagementPage() {
               })}
               {!pagedUsers.length ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={13} className="px-4 py-10 text-center text-sm text-slate-500">
                     No users found.
                   </td>
                 </tr>

@@ -79,6 +79,8 @@ export type MemberListItem = {
   parentFullName?: string | null;
   parentPhoneNumber?: string | null;
   spouseFullName?: string | null;
+  /** Comma-separated sibling names from list API */
+  siblingsSummary?: string | null;
   childCount?: number;
 };
 
