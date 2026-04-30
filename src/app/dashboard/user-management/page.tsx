@@ -452,8 +452,20 @@ export default function UserManagementPage() {
                 );
                 return;
               }
+              const trimmedPhone = form.phoneNumber.trim();
+              if (!trimmedPhone && !form.parentUserId) {
+                notifyErr(
+                  "Mobile number required",
+                  "Only child accounts (with a parent selected in Family link) can omit the phone. Everyone else must have a mobile number."
+                );
+                return;
+              }
+              if (!trimmedPhone) {
+                update.mutate({ id: selectedId, body: { ...form, phoneNumber: "" } });
+                return;
+              }
               const opt = getE164OptionsFromEnv();
-              const e164 = toE164Digits(form.phoneNumber, opt);
+              const e164 = toE164Digits(trimmedPhone, opt);
               if (!e164.ok) {
                 notifyErr("Invalid phone number", e164.error);
                 return;
@@ -499,10 +511,14 @@ export default function UserManagementPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-slate-600">Mobile (international)</label>
+              <label className="block text-xs font-medium text-slate-600">
+                Mobile (international)
+                {!form.parentUserId ? <span className="text-rose-600"> *</span> : null}
+              </label>
               <input
                 type="tel"
                 autoComplete="tel"
+                required={!form.parentUserId}
                 placeholder="e.g. +234 803 123 4567"
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
                 value={form.phoneNumber}
@@ -512,7 +528,9 @@ export default function UserManagementPage() {
                 Use country code with <span className="font-medium">+</span>. The value is stored as E.164 digits
                 (same as sign-in and WhatsApp). Replace any Google sign-in placeholder (
                 <code className="rounded bg-slate-100 px-0.5">G_…</code>) with a full international number to enable
-                SMS-style flows.
+                SMS-style flows.{" "}
+                <span className="font-medium text-slate-600">Required for everyone except child accounts:</span> leave
+                blank only when <span className="font-medium">Family link → Parent user</span> is set.
               </p>
             </div>
             <div>
