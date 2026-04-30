@@ -38,6 +38,7 @@ function buildFormData(profile: MemberProfile): UpdateMemberRequest {
     departments: profile.departments ?? [],
     status: profile.status,
     role: profile.roles.includes("Admin") ? "Admin" : "Member",
+    parentUserId: profile.parentUserId ?? null,
   };
 }
 
@@ -101,6 +102,18 @@ export default function UserManagementPage() {
         u.phoneNumber.toLowerCase().includes(q)
     );
   }, [users.data, search]);
+  const familyRoots = useMemo(() => {
+    const list = users.data ?? [];
+    const byParent = new Map<number | null, MemberListItem[]>();
+    for (const u of list) {
+      const k = u.parentUserId ?? null;
+      const prev = byParent.get(k) ?? [];
+      prev.push(u);
+      byParent.set(k, prev);
+    }
+    for (const arr of byParent.values()) arr.sort((a, b) => a.fullName.localeCompare(b.fullName));
+    return byParent.get(null) ?? [];
+  }, [users.data]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const pagedUsers = useMemo(() => {
@@ -239,6 +252,7 @@ export default function UserManagementPage() {
                 <th className="px-4 py-3 text-left font-medium">Title</th>
                 <th className="px-4 py-3 text-left font-medium">Position</th>
                 <th className="px-4 py-3 text-left font-medium">Department</th>
+                <th className="px-4 py-3 text-left font-medium">Parent</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -282,6 +296,7 @@ export default function UserManagementPage() {
                   <td className="px-4 py-3">{u.title ?? "-"}</td>
                   <td className="px-4 py-3">{u.position ?? "-"}</td>
                   <td className="px-4 py-3">{u.departments?.length ? u.departments.join(", ") : "-"}</td>
+                  <td className="px-4 py-3">{u.parentFullName ?? "-"}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
                       <Link
@@ -317,7 +332,7 @@ export default function UserManagementPage() {
               })}
               {!pagedUsers.length ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -351,6 +366,37 @@ export default function UserManagementPage() {
               Next
             </button>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Family tree</h2>
+        <p className="mt-1 text-xs text-slate-500">Parent-child relationships from user assignments.</p>
+        <div className="mt-3 space-y-2">
+          {familyRoots.length === 0 ? (
+            <p className="text-xs text-slate-500">No root users yet. Assign children to a parent in Edit user.</p>
+          ) : (
+            familyRoots.map((root) => {
+              const children = (users.data ?? []).filter((x) => x.parentUserId === root.id);
+              return (
+                <div key={root.id} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                  <p className="text-sm font-semibold text-slate-900">{root.fullName}</p>
+                  {!children.length ? (
+                    <p className="mt-1 text-xs text-slate-500">No children assigned.</p>
+                  ) : (
+                    <div className="mt-2 space-y-1">
+                      {children.map((child) => (
+                        <div key={child.id} className="flex items-center gap-2 text-sm text-slate-700">
+                          <span className="text-slate-400">└─</span>
+                          <span>{child.fullName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -516,6 +562,25 @@ export default function UserManagementPage() {
                   })
                 )}
               </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600">Parent user (optional)</label>
+              <select
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
+                value={form.parentUserId ?? ""}
+                onChange={(e) =>
+                  setForm((f) => (f ? { ...f, parentUserId: e.target.value ? Number(e.target.value) : null } : f))
+                }
+              >
+                <option value="">None</option>
+                {(users.data ?? [])
+                  .filter((u) => u.id !== selectedId)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.fullName}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Role</label>

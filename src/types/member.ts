@@ -30,6 +30,16 @@ export type MemberProfile = {
   hasBirthdayPhoto1?: boolean;
   hasBirthdayPhoto2?: boolean;
   hasBirthdayPhoto3?: boolean;
+  parentUserId?: number | null;
+  parentFullName?: string | null;
+  parentPhoneNumber?: string | null;
+  children?: MemberFamilyLink[];
+};
+
+export type MemberFamilyLink = {
+  id: number;
+  fullName: string;
+  phoneNumber: string;
 };
 
 export type UpdateProfileRequest = {
@@ -51,6 +61,9 @@ export type MemberListItem = {
   departments?: string[];
   roles: string[];
   dateOfBirth: string | null;
+  parentUserId?: number | null;
+  parentFullName?: string | null;
+  childCount?: number;
 };
 
 export type UpdateMemberRequest = {
@@ -65,6 +78,7 @@ export type UpdateMemberRequest = {
   departments?: string[];
   status: MemberStatus;
   role: "Admin" | "Member";
+  parentUserId?: number | null;
 };
 
 /** Admin-only POST /api/members/bulk */
@@ -106,6 +120,7 @@ export type CreateMemberRequest = {
   status: MemberStatus;
   role: "Admin" | "Member";
   defaultPassword: string;
+  parentUserId?: number | null;
 };
 
 export type BirthdayPersonResponse = {

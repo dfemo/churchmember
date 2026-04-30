@@ -77,7 +77,7 @@ function NavItem({
         item.sub && !collapsed ? "pl-5" : "",
         active
           ? "bg-emerald-500/15 text-emerald-50 shadow-[inset_2px_0_0_#34d399]"
-          : "text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-200",
+          : "bg-white/[0.06] text-zinc-200 hover:bg-white/[0.1] hover:text-zinc-100",
       ].join(" ")}
     >
       <span
@@ -85,7 +85,7 @@ function NavItem({
           "flex h-6 w-6 shrink-0 items-center justify-center rounded border border-transparent transition-colors",
           active
             ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
-            : "bg-zinc-800/50 text-zinc-500 group-hover:border-zinc-700/80 group-hover:text-zinc-300",
+            : "bg-zinc-800/60 text-zinc-300 group-hover:border-zinc-600/80 group-hover:text-zinc-100",
         ].join(" ")}
       >
         <Icon className="h-3 w-3" strokeWidth={1.5} />
@@ -144,7 +144,7 @@ function NavSection({
         "rounded-lg border transition-colors duration-150",
         expanded || activeInSection
           ? "border-zinc-700/60 bg-zinc-900/40"
-          : "border-transparent bg-transparent hover:border-zinc-800/80",
+          : "border-zinc-800/50 bg-white/[0.02] hover:border-zinc-700/70",
       ].join(" ")}
       aria-labelledby={section.id}
     >
@@ -157,8 +157,8 @@ function NavSection({
           "flex w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150",
           activeInSection
             ? "text-zinc-100"
-            : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300",
-          expanded ? "bg-white/[0.04]" : "",
+            : "text-zinc-300 hover:bg-white/[0.08] hover:text-zinc-100",
+          expanded ? "bg-white/[0.08]" : "bg-white/[0.03]",
         ].join(" ")}
       >
         <SectionIcon className="h-3 w-3 shrink-0 opacity-75" strokeWidth={1.5} />

@@ -58,22 +58,24 @@ export function SendMessageDialog({
     if (open) closeRef.current?.focus();
   }, [open]);
 
-  const canSend = Boolean(e164 && body.trim());
-  const waDisabled = !canSend || waSending;
+  const waDisabled = !body.trim() || waSending;
+  const parentFallbackPhone = user.parentPhoneNumber?.trim() || null;
+  const canSendSms = Boolean(e164 && body.trim());
 
   const sendWhatsapp = useCallback(async () => {
-    if (!user || !e164 || !body.trim()) return;
+    if (!user || !body.trim()) return;
     setWaError(null);
     setWaSending(true);
     try {
       const { data } = await api.post<SendWhatsappApiResponse>("/api/messages/whatsapp", {
-        toPhoneNumber: e164,
+        toPhoneNumber: e164 ?? "",
+        recipientUserId: user.id,
         message: body,
         imageUrl: imageUrl.trim() || null,
       });
       onPersistTemplate();
       onWhatsappSent?.({
-        toInternationalDisplay: data.toInternationalDisplay?.trim() || `+${e164}`,
+        toInternationalDisplay: data.toInternationalDisplay?.trim() || (e164 ? `+${e164}` : "resolved recipient"),
       });
       onClose();
     } catch (e) {
@@ -127,6 +129,11 @@ export function SendMessageDialog({
                   <span className="font-mono">+{e164}</span>.
                 </span>
               </p>
+            ) : parentFallbackPhone ? (
+              <p className="mt-1 text-[11px] leading-relaxed text-amber-900">
+                Child has no usable WhatsApp phone. Send will fall back to parent phone:{" "}
+                <span className="font-mono">{parentFallbackPhone}</span>.
+              </p>
             ) : null}
           </div>
           <button
@@ -141,7 +148,7 @@ export function SendMessageDialog({
         </div>
 
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:px-5">
-          {!e164 ? (
+          {!e164 && !parentFallbackPhone ? (
             <p className="text-sm text-amber-800">
               This phone can&apos;t be used until it&apos;s a valid international number (E.164) on the
               user&apos;s profile — e.g. with country code like +234, +1, or +44.
@@ -210,7 +217,7 @@ export function SendMessageDialog({
           </button>
           <button
             type="button"
-            disabled={!canSend || waSending}
+            disabled={!canSendSms || waSending}
             onClick={sendSms}
             className="rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >

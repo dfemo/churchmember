@@ -5,7 +5,7 @@ import { notifyErr, notifyOk } from "@/lib/notify";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import { Eye, EyeOff } from "lucide-react";
-import type { CreateMemberRequest, MemberProfile } from "@/types/member";
+import type { CreateMemberRequest, MemberListItem, MemberProfile } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -22,6 +22,7 @@ type CreateForm = {
   position: string;
   status: "Active" | "Inactive";
   role: "Admin" | "Member";
+  parentUserId: number | null;
   defaultPassword: string;
   confirmPassword: string;
 };
@@ -36,6 +37,7 @@ const emptyForm = (): CreateForm => ({
   position: "",
   status: "Active",
   role: "Member",
+  parentUserId: null,
   defaultPassword: "",
   confirmPassword: "",
 });
@@ -50,6 +52,10 @@ export default function CreateUserPage() {
     queryKey: ["profile-field-options-bundle"],
     queryFn: async () => (await api.get<ProfileFieldOptionsBundle>("/api/profile-field-options")).data,
     staleTime: 60_000,
+  });
+  const membersQ = useQuery({
+    queryKey: ["members-list"],
+    queryFn: async () => (await api.get<MemberListItem[]>("/api/members")).data,
   });
 
   const titleChoices = useMemo(
@@ -122,6 +128,7 @@ export default function CreateUserPage() {
               position: form.position.trim() || null,
               status: form.status,
               role: form.role,
+              parentUserId: form.parentUserId,
               defaultPassword: form.defaultPassword,
             };
             create.mutate(body);
@@ -196,6 +203,21 @@ export default function CreateUserPage() {
               {positionChoices.map((v) => (
                 <option key={v} value={v}>
                   {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600">Parent user (optional)</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
+              value={form.parentUserId ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, parentUserId: e.target.value ? Number(e.target.value) : null }))}
+            >
+              <option value="">None</option>
+              {(membersQ.data ?? []).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.fullName}
                 </option>
               ))}
             </select>
