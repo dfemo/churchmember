@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { api, getApiErrorMessage, setApiAuthToken } from "@/lib/api";
+import { api, getApiErrorMessage, setApiAuthToken, setApiUnauthorizedHandler } from "@/lib/api";
 import { clearStoredToken, getStoredToken, setStoredToken } from "@/lib/auth-storage";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
 import type { AuthResult, MemberProfile, UserSummary } from "@/types/member";
@@ -42,7 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSummary | null>(null);
-  const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
+  const [lastLoginAt, setLastLoginAt] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("cm_last_login_at");
+  });
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     roles: [...m.roles],
   }), []);
 
+  const clearAuthState = useCallback(() => {
+    clearStoredToken();
+    setApiAuthToken(null);
+    setToken(null);
+    setUser(null);
+    setMustChangePassword(false);
+  }, []);
+
   const refreshMe = useCallback(async () => {
     const t = getStoredToken();
     if (!t) {
@@ -61,13 +72,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setApiAuthToken(t);
-    const { data } = await api.get<MemberProfile>("/api/members/me");
-    setUser(mapMemberToUser(data));
-    setMustChangePassword(data.mustChangePassword);
-  }, [mapMemberToUser]);
+    try {
+      const { data } = await api.get<MemberProfile>("/api/members/me");
+      setUser(mapMemberToUser(data));
+      setMustChangePassword(data.mustChangePassword);
+    } catch {
+      clearAuthState();
+      throw new Error("Session expired. Please login again.");
+    }
+  }, [clearAuthState, mapMemberToUser]);
 
   useEffect(() => {
-    setLastLoginAt(localStorage.getItem("cm_last_login_at"));
+    setApiUnauthorizedHandler(() => {
+      clearAuthState();
+      setError("Session expired. Please login again.");
+      setIsReady(true);
+    });
+    return () => setApiUnauthorizedHandler(null);
+  }, [clearAuthState]);
+
+  useEffect(() => {
     const t = getStoredToken();
     if (!t) {
       setApiAuthToken(null);
@@ -82,23 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(mapMemberToUser(data));
         setMustChangePassword(data.mustChangePassword);
       } catch {
-        clearStoredToken();
-        setToken(null);
-        setApiAuthToken(null);
-        setUser(null);
-        setMustChangePassword(false);
+        clearAuthState();
       } finally {
         setIsReady(true);
       }
     })();
-  }, [mapMemberToUser]);
+  }, [clearAuthState, mapMemberToUser]);
 
   const clearError = useCallback(() => setError(null), []);
 
   const applyAuthResult = useCallback((data: AuthResult) => {
     const nowIso = new Date().toISOString();
-    setLastLoginAt(localStorage.getItem("cm_last_login_at"));
     localStorage.setItem("cm_last_login_at", nowIso);
+    setLastLoginAt(nowIso);
     setStoredToken(data.accessToken);
     setApiAuthToken(data.accessToken);
     setToken(data.accessToken);
@@ -170,15 +190,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    clearStoredToken();
-    setApiAuthToken(null);
-    setToken(null);
-    setUser(null);
+    clearAuthState();
     setLastLoginAt(null);
-    setMustChangePassword(false);
     setError(null);
     localStorage.removeItem("cm_last_login_at");
-  }, []);
+  }, [clearAuthState]);
 
   const value = useMemo(
     () => ({

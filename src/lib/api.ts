@@ -8,6 +8,9 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+let unauthorizedHandler: (() => void) | null = null;
+let notifyingUnauthorized = false;
+
 export function setApiAuthToken(token: string | null) {
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -15,6 +18,25 @@ export function setApiAuthToken(token: string | null) {
     delete api.defaults.headers.common.Authorization;
   }
 }
+
+export function setApiUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (isAxiosError(error) && error.response?.status === 401 && unauthorizedHandler && !notifyingUnauthorized) {
+      notifyingUnauthorized = true;
+      try {
+        unauthorizedHandler();
+      } finally {
+        notifyingUnauthorized = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function getApiErrorMessage(err: unknown): string {
   if (isAxiosError(err)) {
