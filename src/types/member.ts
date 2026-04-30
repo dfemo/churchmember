@@ -63,6 +63,7 @@ export type MemberListItem = {
   dateOfBirth: string | null;
   parentUserId?: number | null;
   parentFullName?: string | null;
+  parentPhoneNumber?: string | null;
   childCount?: number;
 };
 
