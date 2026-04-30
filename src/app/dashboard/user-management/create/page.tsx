@@ -23,7 +23,8 @@ type CreateForm = {
   position: string;
   status: "Active" | "Inactive";
   role: "Admin" | "Member";
-  parentUserId: number | null;
+  fatherUserId: number | null;
+  motherUserId: number | null;
   defaultPassword: string;
   confirmPassword: string;
 };
@@ -38,7 +39,8 @@ const emptyForm = (): CreateForm => ({
   position: "",
   status: "Active",
   role: "Member",
-  parentUserId: null,
+  fatherUserId: null,
+  motherUserId: null,
   defaultPassword: "",
   confirmPassword: "",
 });
@@ -113,15 +115,25 @@ export default function CreateUserPage() {
               notifyErr("Password too short", "Initial password must be at least 8 characters.");
               return;
             }
-            const opt = getE164OptionsFromEnv();
-            const e164 = toE164Digits(form.phoneNumber, opt);
-            if (!e164.ok) {
-              notifyErr("Invalid phone number", e164.error);
-              return;
+            const trimmedPhone = form.phoneNumber.trim();
+            let phoneDigits = "";
+            if (!trimmedPhone) {
+              if (!form.fatherUserId && !form.motherUserId) {
+                notifyErr("Mobile number required", "Set father and/or mother if this member has no phone number.");
+                return;
+              }
+            } else {
+              const opt = getE164OptionsFromEnv();
+              const e164 = toE164Digits(trimmedPhone, opt);
+              if (!e164.ok) {
+                notifyErr("Invalid phone number", e164.error);
+                return;
+              }
+              phoneDigits = e164.digits;
             }
             const body: CreateMemberRequest = {
               fullName: form.fullName.trim(),
-              phoneNumber: e164.digits,
+              phoneNumber: phoneDigits,
               email: form.email.trim() || null,
               dateOfBirth: form.dateOfBirth || null,
               address: form.address.trim() || null,
@@ -129,7 +141,8 @@ export default function CreateUserPage() {
               position: form.position.trim() || null,
               status: form.status,
               role: form.role,
-              parentUserId: form.parentUserId,
+              fatherUserId: form.fatherUserId,
+              motherUserId: form.motherUserId,
               defaultPassword: form.defaultPassword,
             };
             create.mutate(body);
@@ -147,12 +160,20 @@ export default function CreateUserPage() {
           <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
             <SearchableMemberSelect
-              fieldId="create-family-parent"
-              label="Parent user (optional)"
+              fieldId="create-family-father"
+              label="Father (optional)"
               members={membersQ.data ?? []}
-              value={form.parentUserId}
-              onChange={(id) => setForm((f) => ({ ...f, parentUserId: id }))}
-              hint="Set this user as a child under the selected parent. Type to filter the list."
+              value={form.fatherUserId}
+              onChange={(id) => setForm((f) => ({ ...f, fatherUserId: id }))}
+              hint="Type to filter by name."
+            />
+            <SearchableMemberSelect
+              fieldId="create-family-mother"
+              label="Mother (optional)"
+              members={membersQ.data ?? []}
+              value={form.motherUserId}
+              onChange={(id) => setForm((f) => ({ ...f, motherUserId: id }))}
+              hint="Type to filter by name."
             />
           </div>
           <div>
@@ -166,10 +187,13 @@ export default function CreateUserPage() {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-slate-600">Mobile (international)</label>
+            <label className="block text-xs font-medium text-slate-600">
+              Mobile (international)
+              {!form.fatherUserId && !form.motherUserId ? <span className="text-rose-600"> *</span> : null}
+            </label>
             <input
               type="tel"
-              required
+              required={!form.fatherUserId && !form.motherUserId}
               autoComplete="tel"
               placeholder="e.g. +234 803 123 4567"
               className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"

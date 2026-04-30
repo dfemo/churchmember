@@ -39,7 +39,11 @@ function buildFormData(profile: MemberProfile): UpdateMemberRequest {
     departments: profile.departments ?? [],
     status: profile.status,
     role: profile.roles.includes("Admin") ? "Admin" : "Member",
+    fatherUserId: profile.fatherUserId ?? null,
+    motherUserId: profile.motherUserId ?? null,
     parentUserId: profile.parentUserId ?? null,
+    spouseUserId: profile.spouse?.id ?? null,
+    siblingUserIds: profile.siblings?.map((s) => s.id) ?? [],
   };
 }
 
@@ -51,6 +55,7 @@ export default function UserManagementPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState<UpdateMemberRequest | null>(null);
+  const [siblingSearch, setSiblingSearch] = useState("");
   const [waTemplate, setWaTemplate] = useState(DEFAULT_TEMPLATE);
   const [messageUser, setMessageUser] = useState<MemberListItem | MemberProfile | null>(null);
 
@@ -74,6 +79,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     if (!selected.data) return;
     setForm(buildFormData(selected.data));
+    setSiblingSearch("");
   }, [selected.data]);
 
   useEffect(() => {
@@ -107,7 +113,7 @@ export default function UserManagementPage() {
     const list = users.data ?? [];
     const byParent = new Map<number | null, MemberListItem[]>();
     for (const u of list) {
-      const k = u.parentUserId ?? null;
+      const k = u.fatherUserId ?? u.motherUserId ?? u.parentUserId ?? null;
       const prev = byParent.get(k) ?? [];
       prev.push(u);
       byParent.set(k, prev);
@@ -378,7 +384,9 @@ export default function UserManagementPage() {
             <p className="text-xs text-slate-500">No root users yet. Assign children to a parent in Edit user.</p>
           ) : (
             familyRoots.map((root) => {
-              const children = (users.data ?? []).filter((x) => x.parentUserId === root.id);
+              const children = (users.data ?? []).filter(
+                (x) => x.fatherUserId === root.id || x.motherUserId === root.id || x.parentUserId === root.id
+              );
               return (
                 <div key={root.id} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
                   <p className="text-sm font-semibold text-slate-900">{root.fullName}</p>
@@ -454,10 +462,10 @@ export default function UserManagementPage() {
                 return;
               }
               const trimmedPhone = form.phoneNumber.trim();
-              if (!trimmedPhone && !form.parentUserId) {
+              if (!trimmedPhone && !form.fatherUserId && !form.motherUserId && !form.parentUserId) {
                 notifyErr(
                   "Mobile number required",
-                  "Only child accounts (with a parent selected in Family link) can omit the phone. Everyone else must have a mobile number."
+                  "Only child accounts (with a father or mother selected in Family link) can omit the phone. Everyone else must have a mobile number."
                 );
                 return;
               }
@@ -485,16 +493,75 @@ export default function UserManagementPage() {
             <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
               <SearchableMemberSelect
-                fieldId="edit-family-parent"
-                label="Parent user (optional)"
+                fieldId="edit-family-father"
+                label="Father (optional)"
                 members={users.data ?? []}
-                value={form.parentUserId ?? null}
+                value={form.fatherUserId ?? form.parentUserId ?? null}
                 onChange={(id) =>
-                  setForm((f) => (f ? { ...f, parentUserId: id } : f))
+                  setForm((f) => (f ? { ...f, fatherUserId: id, parentUserId: id } : f))
                 }
                 excludeIds={selectedId !== null ? [selectedId] : []}
-                hint="Set this user as a child under the selected parent. Type to filter the list."
+                hint="Set this user as a child under the selected father. Type to filter by name."
               />
+              <SearchableMemberSelect
+                fieldId="edit-family-mother"
+                label="Mother (optional)"
+                members={users.data ?? []}
+                value={form.motherUserId ?? null}
+                onChange={(id) =>
+                  setForm((f) => (f ? { ...f, motherUserId: id } : f))
+                }
+                excludeIds={selectedId !== null ? [selectedId] : []}
+                hint="Set this user as a child under the selected mother. Type to filter by name."
+              />
+              <SearchableMemberSelect
+                fieldId="edit-family-spouse"
+                label="Spouse / partner (optional)"
+                members={users.data ?? []}
+                value={form.spouseUserId ?? null}
+                onChange={(id) => setForm((f) => (f ? { ...f, spouseUserId: id } : f))}
+                excludeIds={selectedId !== null ? [selectedId] : []}
+                hint="Optional partner link."
+              />
+              <label className="mt-2 block text-xs font-medium text-slate-700">Siblings (optional)</label>
+              <input
+                type="text"
+                placeholder="Search sibling names…"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={siblingSearch}
+                onChange={(e) => setSiblingSearch(e.target.value)}
+              />
+              <div className="mt-2 max-h-36 space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2">
+                {(users.data ?? [])
+                  .filter((u) => u.id !== selectedId)
+                  .filter((u) => {
+                    const q = siblingSearch.trim().toLowerCase();
+                    return !q || u.fullName.toLowerCase().includes(q);
+                  })
+                  .map((u) => {
+                    const set = new Set(form.siblingUserIds ?? []);
+                    const checked = set.has(u.id);
+                    return (
+                      <label key={u.id} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-violet-50">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              if (!f) return f;
+                              const next = new Set(f.siblingUserIds ?? []);
+                              if (e.target.checked) next.add(u.id);
+                              else next.delete(u.id);
+                              return { ...f, siblingUserIds: Array.from(next).sort((a, b) => a - b) };
+                            })
+                          }
+                        />
+                        <span>{u.fullName}</span>
+                      </label>
+                    );
+                  })}
+              </div>
+              <p className="mt-1 text-[11px] text-slate-600">Attach one or more siblings by name.</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Email</label>
@@ -507,12 +574,12 @@ export default function UserManagementPage() {
             <div className="md:col-span-2">
               <label className="block text-xs font-medium text-slate-600">
                 Mobile (international)
-                {!form.parentUserId ? <span className="text-rose-600"> *</span> : null}
+                {!form.fatherUserId && !form.motherUserId && !form.parentUserId ? <span className="text-rose-600"> *</span> : null}
               </label>
               <input
                 type="tel"
                 autoComplete="tel"
-                required={!form.parentUserId}
+                required={!form.fatherUserId && !form.motherUserId && !form.parentUserId}
                 placeholder="e.g. +234 803 123 4567"
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
                 value={form.phoneNumber}
@@ -524,7 +591,7 @@ export default function UserManagementPage() {
                 <code className="rounded bg-slate-100 px-0.5">G_…</code>) with a full international number to enable
                 SMS-style flows.{" "}
                 <span className="font-medium text-slate-600">Required for everyone except child accounts:</span> leave
-                blank only when <span className="font-medium">Family link → Parent user</span> is set.
+                blank only when <span className="font-medium">Family link → Father or Mother</span> is set.
               </p>
             </div>
             <div>
