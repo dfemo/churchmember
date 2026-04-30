@@ -30,9 +30,17 @@ export type MemberProfile = {
   hasBirthdayPhoto1?: boolean;
   hasBirthdayPhoto2?: boolean;
   hasBirthdayPhoto3?: boolean;
+  fatherUserId?: number | null;
+  fatherFullName?: string | null;
+  fatherPhoneNumber?: string | null;
+  motherUserId?: number | null;
+  motherFullName?: string | null;
+  motherPhoneNumber?: string | null;
   parentUserId?: number | null;
   parentFullName?: string | null;
   parentPhoneNumber?: string | null;
+  spouse?: MemberFamilyLink | null;
+  siblings?: MemberFamilyLink[];
   children?: MemberFamilyLink[];
 };
 
@@ -61,9 +69,16 @@ export type MemberListItem = {
   departments?: string[];
   roles: string[];
   dateOfBirth: string | null;
+  fatherUserId?: number | null;
+  fatherFullName?: string | null;
+  fatherPhoneNumber?: string | null;
+  motherUserId?: number | null;
+  motherFullName?: string | null;
+  motherPhoneNumber?: string | null;
   parentUserId?: number | null;
   parentFullName?: string | null;
   parentPhoneNumber?: string | null;
+  spouseFullName?: string | null;
   childCount?: number;
 };
 
@@ -79,7 +94,12 @@ export type UpdateMemberRequest = {
   departments?: string[];
   status: MemberStatus;
   role: "Admin" | "Member";
+  fatherUserId?: number | null;
+  motherUserId?: number | null;
   parentUserId?: number | null;
+  spouseUserId?: number | null;
+  /** Omit to leave siblings unchanged; send array (possibly empty) to replace */
+  siblingUserIds?: number[];
 };
 
 /** Admin-only POST /api/members/bulk */
@@ -121,6 +141,8 @@ export type CreateMemberRequest = {
   status: MemberStatus;
   role: "Admin" | "Member";
   defaultPassword: string;
+  fatherUserId?: number | null;
+  motherUserId?: number | null;
   parentUserId?: number | null;
 };
 

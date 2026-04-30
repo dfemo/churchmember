@@ -8,6 +8,7 @@ import { formatBirthdayListColumn, isBirthdayCalendarToday } from "@/lib/birthda
 import { DEFAULT_TEMPLATE, getStoredWhatsappTemplate, setStoredWhatsappTemplate } from "@/lib/whatsapp";
 import type { MemberListItem, MemberProfile, UpdateMemberRequest } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
+import { SearchableMemberSelect } from "@/components/user-management/searchable-member-select";
 import { SendMessageDialog } from "@/components/user-management/send-message-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -483,24 +484,17 @@ export default function UserManagementPage() {
             </div>
             <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
-              <label className="mt-2 block text-xs font-medium text-slate-700">Parent user (optional)</label>
-              <select
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={form.parentUserId ?? ""}
-                onChange={(e) =>
-                  setForm((f) => (f ? { ...f, parentUserId: e.target.value ? Number(e.target.value) : null } : f))
+              <SearchableMemberSelect
+                fieldId="edit-family-parent"
+                label="Parent user (optional)"
+                members={users.data ?? []}
+                value={form.parentUserId ?? null}
+                onChange={(id) =>
+                  setForm((f) => (f ? { ...f, parentUserId: id } : f))
                 }
-              >
-                <option value="">None</option>
-                {(users.data ?? [])
-                  .filter((u) => u.id !== selectedId)
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.fullName}
-                    </option>
-                  ))}
-              </select>
-              <p className="mt-1 text-[11px] text-slate-600">Set this user as a child under the selected parent.</p>
+                excludeIds={selectedId !== null ? [selectedId] : []}
+                hint="Set this user as a child under the selected parent. Type to filter the list."
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Email</label>

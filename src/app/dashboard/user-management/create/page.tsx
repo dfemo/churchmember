@@ -4,6 +4,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { notifyErr, notifyOk } from "@/lib/notify";
 import { mergePicklistWithCurrent } from "@/lib/merge-profile-picklists";
 import { getE164OptionsFromEnv, toE164Digits } from "@/lib/phone-e164";
+import { SearchableMemberSelect } from "@/components/user-management/searchable-member-select";
 import { Eye, EyeOff } from "lucide-react";
 import type { CreateMemberRequest, MemberListItem, MemberProfile } from "@/types/member";
 import type { ProfileFieldOptionsBundle } from "@/types/profile-field-options";
@@ -145,20 +146,14 @@ export default function CreateUserPage() {
           </div>
           <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
-            <label className="mt-2 block text-xs font-medium text-slate-700">Parent user (optional)</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              value={form.parentUserId ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, parentUserId: e.target.value ? Number(e.target.value) : null }))}
-            >
-              <option value="">None</option>
-              {(membersQ.data ?? []).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.fullName}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-[11px] text-slate-600">Set this user as a child under the selected parent.</p>
+            <SearchableMemberSelect
+              fieldId="create-family-parent"
+              label="Parent user (optional)"
+              members={membersQ.data ?? []}
+              value={form.parentUserId}
+              onChange={(id) => setForm((f) => ({ ...f, parentUserId: id }))}
+              hint="Set this user as a child under the selected parent. Type to filter the list."
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600">Email</label>
