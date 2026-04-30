@@ -59,7 +59,7 @@ export function SendMessageDialog({
   }, [open]);
 
   const waDisabled = !body.trim() || waSending;
-  const parentFallbackPhone = user.parentPhoneNumber?.trim() || null;
+  const parentFallbackPhone = user?.parentPhoneNumber?.trim() || null;
   const canSendSms = Boolean(e164 && body.trim());
 
   const sendWhatsapp = useCallback(async () => {
