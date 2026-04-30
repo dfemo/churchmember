@@ -469,6 +469,27 @@ export default function UserManagementPage() {
                 onChange={(e) => setForm((f) => (f ? { ...f, fullName: e.target.value } : f))}
               />
             </div>
+            <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
+              <label className="mt-2 block text-xs font-medium text-slate-700">Parent user (optional)</label>
+              <select
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={form.parentUserId ?? ""}
+                onChange={(e) =>
+                  setForm((f) => (f ? { ...f, parentUserId: e.target.value ? Number(e.target.value) : null } : f))
+                }
+              >
+                <option value="">None</option>
+                {(users.data ?? [])
+                  .filter((u) => u.id !== selectedId)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.fullName}
+                    </option>
+                  ))}
+              </select>
+              <p className="mt-1 text-[11px] text-slate-600">Set this user as a child under the selected parent.</p>
+            </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Email</label>
               <input
@@ -562,25 +583,6 @@ export default function UserManagementPage() {
                   })
                 )}
               </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600">Parent user (optional)</label>
-              <select
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-                value={form.parentUserId ?? ""}
-                onChange={(e) =>
-                  setForm((f) => (f ? { ...f, parentUserId: e.target.value ? Number(e.target.value) : null } : f))
-                }
-              >
-                <option value="">None</option>
-                {(users.data ?? [])
-                  .filter((u) => u.id !== selectedId)
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.fullName}
-                    </option>
-                  ))}
-              </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600">Role</label>

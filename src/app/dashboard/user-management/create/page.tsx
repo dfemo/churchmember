@@ -143,6 +143,23 @@ export default function CreateUserPage() {
               onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
             />
           </div>
+          <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
+            <label className="mt-2 block text-xs font-medium text-slate-700">Parent user (optional)</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              value={form.parentUserId ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, parentUserId: e.target.value ? Number(e.target.value) : null }))}
+            >
+              <option value="">None</option>
+              {(membersQ.data ?? []).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.fullName}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-slate-600">Set this user as a child under the selected parent.</p>
+          </div>
           <div>
             <label className="block text-xs font-medium text-slate-600">Email</label>
             <input
@@ -203,21 +220,6 @@ export default function CreateUserPage() {
               {positionChoices.map((v) => (
                 <option key={v} value={v}>
                   {v}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600">Parent user (optional)</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-              value={form.parentUserId ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, parentUserId: e.target.value ? Number(e.target.value) : null }))}
-            >
-              <option value="">None</option>
-              {(membersQ.data ?? []).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.fullName}
                 </option>
               ))}
             </select>
