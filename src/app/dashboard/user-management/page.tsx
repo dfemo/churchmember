@@ -411,7 +411,7 @@ export default function UserManagementPage() {
 
       {drawerOpen ? <div className="fixed inset-0 z-30 bg-slate-900/35 lg:hidden" onClick={() => setDrawerOpen(false)} /> : null}
       <aside
-        className={`fixed right-0 top-0 z-40 h-svh w-full max-w-xl border-l border-slate-200 bg-white p-5 shadow-2xl transition-transform duration-200 ${
+        className={`fixed right-0 top-0 z-40 h-svh w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-2xl transition-transform duration-200 ${
           drawerOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -450,7 +450,7 @@ export default function UserManagementPage() {
           <p className="text-sm text-rose-700">{getApiErrorMessage(selected.error)}</p>
         ) : selected.data && form ? (
           <form
-            className="grid gap-3 md:grid-cols-2"
+            className="grid grid-cols-1 gap-2 pb-16 sm:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
               if (!selectedId || !selected.data) return;
@@ -482,7 +482,7 @@ export default function UserManagementPage() {
               update.mutate({ id: selectedId, body: { ...form, phoneNumber: e164.digits } });
             }}
           >
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-xs font-medium text-slate-600">Full name</label>
               <input
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
@@ -490,7 +490,15 @@ export default function UserManagementPage() {
                 onChange={(e) => setForm((f) => (f ? { ...f, fullName: e.target.value } : f))}
               />
             </div>
-            <div className="md:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600">Email</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
+                value={form.email ?? ""}
+                onChange={(e) => setForm((f) => (f ? { ...f, email: e.target.value || null } : f))}
+              />
+            </div>
+            <div className="sm:col-span-2 rounded-lg border border-violet-200 bg-violet-50/70 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Family link</p>
               <SearchableMemberSelect
                 fieldId="edit-family-father"
@@ -563,15 +571,7 @@ export default function UserManagementPage() {
               </div>
               <p className="mt-1 text-[11px] text-slate-600">Attach one or more siblings by name.</p>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600">Email</label>
-              <input
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
-                value={form.email ?? ""}
-                onChange={(e) => setForm((f) => (f ? { ...f, email: e.target.value || null } : f))}
-              />
-            </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-600">
                 Mobile (international)
                 {!form.fatherUserId && !form.motherUserId && !form.parentUserId ? <span className="text-rose-600"> *</span> : null}
@@ -633,7 +633,7 @@ export default function UserManagementPage() {
                 ))}
               </select>
             </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-600">Departments</label>
               <div className="mt-1 grid gap-2 rounded-lg border border-slate-300 bg-slate-50 p-2 sm:grid-cols-2">
                 {departmentChoices.length === 0 ? (
@@ -685,7 +685,7 @@ export default function UserManagementPage() {
                 <option value="Inactive">Inactive</option>
               </select>
             </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-600">Address</label>
               <textarea
                 rows={2}
@@ -694,7 +694,7 @@ export default function UserManagementPage() {
                 onChange={(e) => setForm((f) => (f ? { ...f, address: e.target.value || null } : f))}
               />
             </div>
-            <div className="md:col-span-2 flex items-center gap-2">
+            <div className="sm:col-span-2 flex items-center gap-2">
               <button
                 type="submit"
                 disabled={update.isPending}
