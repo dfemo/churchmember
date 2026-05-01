@@ -44,7 +44,10 @@ export default function AdminDashboardPage() {
       (await api.post<BirthdayWhatsappAnnouncementRunResponse>("/api/birthdays/whatsapp/send-today", {})).data,
     onSuccess: (data) => {
       const lines = data.results.map((r) => {
-        return `${r.fullName}: ${r.outcome}${r.sentToFamilyOrCelebrant ? ` → ${r.sentToFamilyOrCelebrant}` : ""}${r.sentToChurchLine ? `; church ${r.sentToChurchLine}` : ""}`;
+        const ts = [r.recipientMarkedSentAtUtc && `r:${r.recipientMarkedSentAtUtc}`, r.churchMarkedSentAtUtc && `c:${r.churchMarkedSentAtUtc}`]
+          .filter(Boolean)
+          .join(" ");
+        return `${r.fullName}: ${r.outcome}${r.sentToFamilyOrCelebrant ? ` → ${r.sentToFamilyOrCelebrant}` : ""}${r.sentToChurchLine ? `; church ${r.sentToChurchLine}` : ""}${ts ? ` [${ts}]` : ""}`;
       });
       const detail = lines.length ? lines.join("\n") : "No celebrants for this local date.";
       notifyOk(

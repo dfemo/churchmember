@@ -173,6 +173,8 @@ export type BirthdayWhatsappCelebrantSendResult = {
   outcome: string;
   sentToFamilyOrCelebrant: string | null;
   sentToChurchLine: string | null;
+  recipientMarkedSentAtUtc?: string | null;
+  churchMarkedSentAtUtc?: string | null;
 };
 
 export type BirthdayWhatsappAnnouncementRunResponse = {
