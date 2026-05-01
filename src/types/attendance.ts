@@ -23,3 +23,24 @@ export type SundayServiceAttendanceAdminRow = {
   attendanceDate: string;
   sundayServiceMode: SundayServiceMode | null;
 };
+
+export type BulkAttendanceBody = {
+  attendanceDate: string;
+  kind: AttendanceKind;
+  eventName?: string | null;
+  sundayServiceMode?: SundayServiceMode | null;
+  userIds: number[];
+};
+
+export type BulkAttendanceItemResult = {
+  userId: number;
+  status: string;
+  record?: AttendanceRecord | null;
+};
+
+export type BulkAttendanceResponse = {
+  createdCount: number;
+  skippedDuplicateCount: number;
+  skippedNotFoundCount: number;
+  results: BulkAttendanceItemResult[];
+};
