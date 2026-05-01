@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { FamilyTiesCards } from "@/components/member/family-ties-cards";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { AttendanceRecord } from "@/types/attendance";
 import type { MemberProfile } from "@/types/member";
@@ -11,6 +12,7 @@ import { useMemo } from "react";
 
 export default function MemberDashboardPage() {
   const { user, lastLoginAt } = useAuth();
+  const isAdmin = Boolean(user?.roles?.includes("Admin"));
   const profile = useQuery({
     queryKey: ["me"],
     queryFn: async () => (await api.get<MemberProfile>("/api/members/me")).data,
@@ -51,6 +53,16 @@ export default function MemberDashboardPage() {
           <p className="mt-2 text-base font-semibold text-slate-900">{profile.data?.status ?? "Loading…"}</p>
         </div>
       </div>
+
+      {profile.isLoading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white/60 p-8 shadow-sm">
+          <p className="text-sm text-slate-500">Loading family ties…</p>
+        </div>
+      ) : profile.data ? (
+        <FamilyTiesCards profile={profile.data} isAdmin={isAdmin} />
+      ) : profile.isError ? (
+        <p className="text-sm text-rose-600">{getApiErrorMessage(profile.error)}</p>
+      ) : null}
 
       <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
         <div className="flex flex-wrap items-start justify-between gap-3">

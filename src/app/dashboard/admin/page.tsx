@@ -43,7 +43,9 @@ export default function AdminDashboardPage() {
     mutationFn: async () =>
       (await api.post<BirthdayWhatsappAnnouncementRunResponse>("/api/birthdays/whatsapp/send-today", {})).data,
     onSuccess: (data) => {
-      const lines = data.results.map((r) => `${r.fullName}: ${r.outcome}${r.sentToFamilyOrCelebrant ? ` → ${r.sentToFamilyOrCelebrant}` : ""}${r.sentToChurchLine ? `; church ${r.sentToChurchLine}` : ""}`);
+      const lines = data.results.map((r) => {
+        return `${r.fullName}: ${r.outcome}${r.sentToFamilyOrCelebrant ? ` → ${r.sentToFamilyOrCelebrant}` : ""}${r.sentToChurchLine ? `; church ${r.sentToChurchLine}` : ""}`;
+      });
       const detail = lines.length ? lines.join("\n") : "No celebrants for this local date.";
       notifyOk(
         `Birthday WhatsApp run (${data.localDate}, ${data.timeZone})`,
@@ -198,9 +200,9 @@ export default function AdminDashboardPage() {
             ) : null}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            Uses server automation: Twilio template with celebrant name when <code className="rounded bg-slate-100 px-0.5">WhatsApp:Provider</code> is{" "}
-            <code className="rounded bg-slate-100 px-0.5">Twilio</code> and a Content SID is set; otherwise Meta plain text. Sends to the member or parent
-            phone fallback, plus <code className="rounded bg-slate-100 px-0.5">WhatsApp:Birthday:ChurchLinePhone</code> when configured.
+            Twilio/Meta automation: WhatsApp goes to the <span className="font-medium text-slate-700">celebrant</span> when they have a phone on their profile.
+            Parents are contacted <span className="font-medium text-slate-700">only if the child has no phone</span>. Comma-separated{" "}
+            <code className="rounded bg-slate-100 px-0.5">WhatsApp:Birthday:ChurchLinePhone</code> receives a copy when configured.
           </p>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
             {hasBirthdaysToday ? (
