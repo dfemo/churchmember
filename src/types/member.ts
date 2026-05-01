@@ -166,3 +166,17 @@ export type DashboardStatsResponse = {
   pendingPrayerRequests: number;
   memberViewsAwaitingResponse: number;
 };
+
+export type BirthdayWhatsappCelebrantSendResult = {
+  celebrantUserId: number;
+  fullName: string;
+  outcome: string;
+  sentToFamilyOrCelebrant: string | null;
+  sentToChurchLine: string | null;
+};
+
+export type BirthdayWhatsappAnnouncementRunResponse = {
+  localDate: string;
+  timeZone: string;
+  results: BirthdayWhatsappCelebrantSendResult[];
+};

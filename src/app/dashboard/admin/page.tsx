@@ -2,8 +2,9 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { DashboardStatsResponse } from "@/types/member";
-import { useQuery } from "@tanstack/react-query";
+import { notifyErr, notifyOk } from "@/lib/notify";
+import type { BirthdayWhatsappAnnouncementRunResponse, DashboardStatsResponse } from "@/types/member";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Gift } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,23 @@ export default function AdminDashboardPage() {
   const q = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => (await api.get<DashboardStatsResponse>("/api/dashboard/stats")).data,
+  });
+
+  const sendBirthdayWhatsApp = useMutation({
+    mutationFn: async () =>
+      (await api.post<BirthdayWhatsappAnnouncementRunResponse>("/api/birthdays/whatsapp/send-today", {})).data,
+    onSuccess: (data) => {
+      const lines = data.results.map((r) => `${r.fullName}: ${r.outcome}${r.sentToFamilyOrCelebrant ? ` → ${r.sentToFamilyOrCelebrant}` : ""}${r.sentToChurchLine ? `; church ${r.sentToChurchLine}` : ""}`);
+      const detail = lines.length ? lines.join("\n") : "No celebrants for this local date.";
+      notifyOk(
+        `Birthday WhatsApp run (${data.localDate}, ${data.timeZone})`,
+        detail.length > 600 ? `${detail.slice(0, 600)}…` : detail
+      );
+      void q.refetch();
+    },
+    onError: (e: unknown) => {
+      notifyErr("Birthday WhatsApp run failed", getApiErrorMessage(e));
+    },
   });
 
   const todays = q.data?.todaysBirthdays ?? [];
@@ -163,9 +181,26 @@ export default function AdminDashboardPage() {
               : "border border-slate-200"
           }`}
         >
-          <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            {hasBirthdaysToday ? <Gift className="h-4 w-4 shrink-0 text-rose-600" aria-hidden /> : null}
-            Today&apos;s birthdays
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              {hasBirthdaysToday ? <Gift className="h-4 w-4 shrink-0 text-rose-600" aria-hidden /> : null}
+              Today&apos;s birthdays
+            </p>
+            {hasBirthdaysToday ? (
+              <button
+                type="button"
+                disabled={sendBirthdayWhatsApp.isPending}
+                onClick={() => sendBirthdayWhatsApp.mutate()}
+                className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-900 hover:bg-violet-100 disabled:opacity-50"
+              >
+                {sendBirthdayWhatsApp.isPending ? "Sending…" : "Send birthday WhatsApp (today)"}
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+            Uses server automation: Twilio template with celebrant name when <code className="rounded bg-slate-100 px-0.5">WhatsApp:Provider</code> is{" "}
+            <code className="rounded bg-slate-100 px-0.5">Twilio</code> and a Content SID is set; otherwise Meta plain text. Sends to the member or parent
+            phone fallback, plus <code className="rounded bg-slate-100 px-0.5">WhatsApp:Birthday:ChurchLinePhone</code> when configured.
           </p>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
             {hasBirthdaysToday ? (
