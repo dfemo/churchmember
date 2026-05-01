@@ -5,6 +5,8 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { notifyErr, notifyOk } from "@/lib/notify";
 import type { BirthdayWhatsappAnnouncementRunResponse, DashboardStatsResponse } from "@/types/member";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { BirthdayMonthCalendar } from "@/components/admin/birthday-month-calendar";
+import { SundayAttendanceLast4Chart } from "@/components/admin/sunday-attendance-last4-chart";
 import { Gift } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -169,11 +171,12 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-          <p className="text-sm font-semibold text-slate-900">Activity split (placeholder)</p>
-          <div className="mt-4 flex h-44 items-center justify-center">
-            <div className="relative h-36 w-36 rounded-full bg-[conic-gradient(#22c55e_0_68%,#f59e0b_68_85%,#94a3b8_85_100%)]">
-              <div className="absolute inset-4 rounded-full bg-white" />
-            </div>
+          <p className="text-sm font-semibold text-slate-900">Sunday attendance (last 4 Sundays)</p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+            Headcount from marked Sunday service rows (four most recent Sundays in the church birthday timezone).
+          </p>
+          <div className="mt-3">
+            <SundayAttendanceLast4Chart points={q.data?.sundayServiceAttendanceLast4 ?? []} />
           </div>
         </div>
       </div>
@@ -223,16 +226,36 @@ export default function AdminDashboardPage() {
           </ul>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-          <p className="text-sm font-semibold text-slate-900">Upcoming birthdays (7 days)</p>
-          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+          <p className="text-sm font-semibold text-slate-900">Birthday calendar</p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+            Pins match active members&apos; birthdays (church month). Earlier days are toned down; dots mark celebrants — click a day for names and profile links.
+          </p>
+          {q.data ? (
+            <div className="mt-4">
+              <BirthdayMonthCalendar
+                displayYear={q.data.calendarDisplayYear}
+                displayMonth={q.data.calendarDisplayMonth}
+                birthdays={q.data.calendarMonthBirthdays}
+              />
+            </div>
+          ) : (
+            <p className="mt-6 text-center text-xs text-slate-500">{q.isLoading ? "Loading…" : "—"}</p>
+          )}
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Also next 7 days</p>
+          <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
             {(q.data?.upcomingBirthdaysNext7Days ?? []).length ? (
               q.data!.upcomingBirthdaysNext7Days.map((p) => (
                 <li key={`${p.id}-${p.date}`}>
-                  {p.fullName} — {new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  <Link href={`/dashboard/user-management/${p.id}`} className="font-medium text-violet-800 hover:underline">
+                    {p.fullName}
+                  </Link>{" "}
+                  <span className="text-slate-500">
+                    — {new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
                 </li>
               ))
             ) : (
-              <li className="text-slate-500">No upcoming birthdays.</li>
+              <li className="text-slate-500">No upcoming birthdays in the next week.</li>
             )}
           </ul>
         </div>

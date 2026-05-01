@@ -154,7 +154,12 @@ export type BirthdayPersonResponse = {
   id: number;
   fullName: string;
   date: string;
-  kind: "Today" | "Upcoming";
+  kind: "Today" | "Upcoming" | "Past";
+};
+
+export type SundayAttendanceCountPoint = {
+  date: string;
+  headcount: number;
 };
 
 export type DashboardStatsResponse = {
@@ -163,6 +168,10 @@ export type DashboardStatsResponse = {
   inactiveMembers: number;
   todaysBirthdays: BirthdayPersonResponse[];
   upcomingBirthdaysNext7Days: BirthdayPersonResponse[];
+  calendarDisplayYear: number;
+  calendarDisplayMonth: number;
+  calendarMonthBirthdays: BirthdayPersonResponse[];
+  sundayServiceAttendanceLast4: SundayAttendanceCountPoint[];
   pendingPrayerRequests: number;
   memberViewsAwaitingResponse: number;
 };
