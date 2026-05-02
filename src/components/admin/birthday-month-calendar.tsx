@@ -7,6 +7,8 @@ import { useMemo, useState } from "react";
 
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+const MAX_NAMES_VISIBLE = 6;
+
 function birthdaysByDay(entries: BirthdayPersonResponse[]): Map<string, BirthdayPersonResponse[]> {
   const m = new Map<string, BirthdayPersonResponse[]>();
   for (const p of entries) {
@@ -21,7 +23,7 @@ function birthdaysByDay(entries: BirthdayPersonResponse[]): Map<string, Birthday
   return m;
 }
 
-/** Month grid pinned to dashboard church TZ month; shows birthday dots and drill-down links. */
+/** Month grid pinned to dashboard church TZ month; names appear per day with profile links. */
 export function BirthdayMonthCalendar({
   displayYear,
   displayMonth,
@@ -82,10 +84,10 @@ export function BirthdayMonthCalendar({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 items-stretch">
         {paddedCells.map((c) =>
           c.type === "blank" ? (
-            <div key={c.key} className="aspect-square rounded-lg bg-slate-50/60" aria-hidden />
+            <div key={c.key} className="min-h-[4rem] rounded-lg bg-slate-50/60" aria-hidden />
           ) : (
             <DayPinCell
               key={c.key}
@@ -99,8 +101,6 @@ export function BirthdayMonthCalendar({
           )
         )}
       </div>
-
-      <SelectedBirthdayPins dayKey={focusKey} monthHeading={monthLabel} map={byDay} />
     </div>
   );
 }
@@ -128,58 +128,53 @@ function DayPinCell({
   else if (hasPins && !isPastOnly) tone = "border-violet-300 bg-violet-50/70 hover:bg-violet-100/70";
   else if (isPastOnly) tone = "border-slate-200 bg-slate-50/95 text-slate-500 hover:bg-slate-100";
 
+  const visible = people.slice(0, MAX_NAMES_VISIBLE);
+  const overflow = people.length - visible.length;
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onPick();
+    }
+  }
+
   return (
-    <button type="button" onClick={onPick} aria-pressed={selected} aria-label={`Day ${dayNum}`} title={people.map((p) => p.fullName).join(", ") || undefined} className={`flex aspect-square flex-col rounded-lg border p-1.5 text-left transition ${tone} ${selected ? "ring-2 ring-violet-500 ring-offset-1" : ""}`}>
-      <span className={`text-[11px] font-bold ${isToday ? "text-rose-800" : "text-slate-800"}`}>{dayNum}</span>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onPick}
+      onKeyDown={onKeyDown}
+      aria-pressed={selected}
+      aria-label={`Day ${dayNum}${hasPins ? `, ${people.length} birthday${people.length === 1 ? "" : "s"}` : ""}`}
+      className={`flex min-h-[4rem] flex-col rounded-lg border p-1 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-violet-400 ${tone} ${selected ? "ring-2 ring-violet-500 ring-offset-1" : ""}`}
+    >
+      <span className={`shrink-0 text-[11px] font-bold leading-none ${isToday ? "text-rose-800" : "text-slate-800"}`}>
+        {dayNum}
+      </span>
+
       {hasPins ? (
-        <span className="mt-auto flex gap-1" aria-hidden>
-          {Array.from({ length: Math.min(people.length, 4) }).map((_, idx) => (
-            <span key={idx} className="inline-block h-2 w-2 shrink-0 rounded-full bg-rose-500 shadow-sm" />
+        <ul className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-0.5">
+          {visible.map((p) => (
+            <li key={p.id} className="min-w-0 leading-tight">
+              <Link
+                href={`/dashboard/user-management/${p.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className={`block truncate text-[9px] font-semibold underline-offset-2 hover:underline ${
+                  isPastOnly ? "text-slate-600 hover:text-slate-900" : "text-violet-900 hover:text-violet-950"
+                }`}
+                title={p.fullName}
+              >
+                {p.fullName}
+              </Link>
+            </li>
           ))}
-        </span>
-      ) : null}
-    </button>
-  );
-}
-
-function SelectedBirthdayPins({
-  dayKey,
-  monthHeading,
-  map,
-}: {
-  dayKey: string | null;
-  monthHeading: string;
-  map: Map<string, BirthdayPersonResponse[]>;
-}) {
-  if (!dayKey || !map.has(dayKey))
-    return (
-      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-3 text-[11px] text-slate-500">
-        No birthdays pinned for {monthHeading}. Active members without date of birth are omitted.
-      </div>
-    );
-
-  const rows = map.get(dayKey)!;
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-inner">
-      <p className="text-[11px] font-semibold text-slate-700">
-        {dayKey}: {rows.length} birthday{rows.length === 1 ? "" : "s"}
-      </p>
-      <ul className="mt-2 max-h-36 space-y-1.5 overflow-y-auto text-xs">
-        {rows.map((p) => (
-          <li key={`${dayKey}-${p.id}`}>
-            <Link
-              href={`/dashboard/user-management/${p.id}`}
-              className="font-medium text-violet-800 underline-offset-2 hover:underline"
-            >
-              {p.fullName}
-            </Link>
-            <span className="ml-1 text-slate-500">
-              {p.kind === "Today" ? "· Today" : p.kind === "Past" ? "· Earlier this month" : "· Upcoming"}
-            </span>
-          </li>
-        ))}
-      </ul>
+          {overflow > 0 ? (
+            <li className="text-[9px] font-medium text-slate-600">+{overflow} more</li>
+          ) : null}
+        </ul>
+      ) : (
+        <span className="flex-1" aria-hidden />
+      )}
     </div>
   );
 }

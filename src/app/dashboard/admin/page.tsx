@@ -228,7 +228,7 @@ export default function AdminDashboardPage() {
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
           <p className="text-sm font-semibold text-slate-900">Birthday calendar</p>
           <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-            Pins match active members&apos; birthdays (church month). Earlier days are toned down; dots mark celebrants — click a day for names and profile links.
+            Active members&apos; birthdays for the church calendar month. Names show on each day; links open profiles. Earlier days are toned down.
           </p>
           {q.data ? (
             <div className="mt-4">
