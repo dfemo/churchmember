@@ -24,6 +24,14 @@ type SendMessageDialogProps = {
   onWhatsappSent?: (info: { toInternationalDisplay: string }) => void;
 };
 
+function buildRecipientDisplayName(user: Recipient): string {
+  const fullName = user.fullName.trim();
+  const position = user.position?.trim() ?? "";
+  if (!position) return fullName;
+  if (fullName.toLowerCase().startsWith(position.toLowerCase())) return fullName;
+  return `${position} ${fullName}`.trim();
+}
+
 export function SendMessageDialog({
   open,
   onClose,
@@ -48,7 +56,7 @@ export function SendMessageDialog({
 
   useEffect(() => {
     if (open && user) {
-      setBody(user.fullName.trim());
+      setBody(buildRecipientDisplayName(user));
       setImageUrl("");
       setWaError(null);
     }
@@ -188,7 +196,7 @@ export function SendMessageDialog({
               placeholder="Write your message…"
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              Starts with the member&apos;s full name; edit the text as needed.
+              Starts with the member&apos;s position and full name when available; edit the text as needed.
             </p>
           </div>
 

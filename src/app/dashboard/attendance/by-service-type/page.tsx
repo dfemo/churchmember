@@ -2,8 +2,12 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { SundayServiceAttendanceAdminRow, SundayServiceMode } from "@/types/attendance";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  SundayServiceAttendanceAdminRow,
+  SundayServiceMode,
+  UpdateSundayServiceAttendanceBody,
+} from "@/types/attendance";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListFilter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -18,9 +22,12 @@ const modeOptions: { value: "" | SundayServiceMode; label: string }[] = [
   { value: "Onsite", label: "On-site" },
 ];
 
+const unsetMode = "__unset__" as const;
+
 export default function AttendanceByServiceTypePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const today = useMemo(() => new Date(), []);
   const defaultTo = useMemo(() => isoDateLocal(today), [today]);
   const defaultFrom = useMemo(() => {
@@ -49,6 +56,19 @@ export default function AttendanceByServiceTypePage() {
       return (await api.get<SundayServiceAttendanceAdminRow[]>(path)).data;
     },
     enabled: Boolean(user?.roles?.includes("Admin")),
+  });
+
+  const updateModeMutation = useMutation({
+    mutationFn: async ({ recordId, body }: { recordId: number; body: UpdateSundayServiceAttendanceBody }) =>
+      (
+        await api.patch<{ sundayServiceMode: SundayServiceMode | null }>(
+          `/api/attendance/admin/sunday-service/${recordId}`,
+          body
+        )
+      ).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["attendance", "admin", "sunday"] });
+    },
   });
 
   if (!user?.roles?.includes("Admin")) {
@@ -117,6 +137,10 @@ export default function AttendanceByServiceTypePage() {
         <p className="text-sm text-red-600">{getApiErrorMessage(reportQuery.error)}</p>
       ) : null}
 
+      {updateModeMutation.isError ? (
+        <p className="text-sm text-red-600">{getApiErrorMessage(updateModeMutation.error)}</p>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -126,18 +150,19 @@ export default function AttendanceByServiceTypePage() {
                 <th className="px-4 py-3 font-semibold text-slate-700">Member</th>
                 <th className="px-4 py-3 font-semibold text-slate-700">Phone</th>
                 <th className="px-4 py-3 font-semibold text-slate-700">Mode</th>
+                <th className="px-4 py-3 font-semibold text-slate-700">Correct mode</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {reportQuery.isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     Loading…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     No records in this range.
                   </td>
                 </tr>
@@ -155,6 +180,28 @@ export default function AttendanceByServiceTypePage() {
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        aria-label={`Correct attendance mode for ${r.fullName} on ${r.attendanceDate}`}
+                        className="max-w-[11rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs shadow-inner outline-none focus:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/15 disabled:opacity-60"
+                        value={r.sundayServiceMode ?? unsetMode}
+                        disabled={updateModeMutation.isPending}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (next === unsetMode || next === r.sundayServiceMode) return;
+                          updateModeMutation.mutate({
+                            recordId: r.id,
+                            body: { mode: next as SundayServiceMode },
+                          });
+                        }}
+                      >
+                        <option value={unsetMode} disabled>
+                          Set mode…
+                        </option>
+                        <option value="Online">Online</option>
+                        <option value="Onsite">On-site</option>
+                      </select>
                     </td>
                   </tr>
                 ))

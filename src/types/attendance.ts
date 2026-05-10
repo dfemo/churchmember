@@ -15,6 +15,10 @@ export type MarkSundayAttendanceBody = {
   mode: SundayServiceMode;
 };
 
+export type UpdateSundayServiceAttendanceBody = {
+  mode: SundayServiceMode;
+};
+
 export type SundayServiceAttendanceAdminRow = {
   id: number;
   userId: number;
