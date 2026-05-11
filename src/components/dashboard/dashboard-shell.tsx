@@ -77,16 +77,16 @@ function NavItem({
         collapsed ? "justify-center px-0" : "px-1.5",
         item.sub && !collapsed ? "pl-5" : "",
         active
-          ? "bg-emerald-500/15 text-emerald-50 shadow-[inset_2px_0_0_#34d399]"
-          : "bg-white/[0.06] text-zinc-200 hover:bg-white/[0.1] hover:text-zinc-100",
+          ? "bg-emerald-600/12 text-emerald-950 shadow-[inset_2px_0_0_#059669]"
+          : "bg-transparent text-zinc-700 hover:bg-zinc-300/60 hover:text-zinc-900",
       ].join(" ")}
     >
       <span
         className={[
           "flex h-6 w-6 shrink-0 items-center justify-center rounded border border-transparent transition-colors",
           active
-            ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
-            : "bg-zinc-800/60 text-zinc-300 group-hover:border-zinc-600/80 group-hover:text-zinc-100",
+            ? "border-emerald-600/30 bg-emerald-600/15 text-emerald-800"
+            : "bg-zinc-300/80 text-zinc-600 group-hover:border-zinc-400 group-hover:text-zinc-800",
         ].join(" ")}
       >
         <Icon className="h-3 w-3" strokeWidth={1.5} />
@@ -95,7 +95,7 @@ function NavItem({
         <>
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           {item.badge ? (
-            <span className="rounded bg-zinc-800/90 px-1 py-px text-[8px] font-normal uppercase tracking-wide text-emerald-200/90">
+            <span className="rounded bg-zinc-400/50 px-1 py-px text-[8px] font-normal text-zinc-800">
               {item.badge}
             </span>
           ) : null}
@@ -144,8 +144,8 @@ function NavSection({
       className={[
         "rounded-lg border transition-colors duration-150",
         expanded || activeInSection
-          ? "border-zinc-700/60 bg-zinc-900/40"
-          : "border-zinc-800/50 bg-white/[0.02] hover:border-zinc-700/70",
+          ? "border-zinc-400/80 bg-zinc-300/50"
+          : "border-zinc-300/80 bg-zinc-200/80 hover:border-zinc-400",
       ].join(" ")}
       aria-labelledby={section.id}
     >
@@ -157,18 +157,18 @@ function NavSection({
         className={[
           "flex w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150",
           activeInSection
-            ? "text-zinc-100"
-            : "text-zinc-300 hover:bg-white/[0.08] hover:text-zinc-100",
-          expanded ? "bg-white/[0.08]" : "bg-white/[0.03]",
+            ? "text-zinc-900"
+            : "text-zinc-600 hover:bg-zinc-300/50 hover:text-zinc-900",
+          expanded ? "bg-zinc-300/40" : "bg-transparent",
         ].join(" ")}
       >
-        <SectionIcon className="h-3 w-3 shrink-0 opacity-75" strokeWidth={1.5} />
-        <span className="min-w-0 flex-1 truncate text-[10px] font-light uppercase tracking-[0.1em] text-zinc-400">
+        <SectionIcon className="h-3 w-3 shrink-0 opacity-80 text-zinc-600" strokeWidth={1.5} />
+        <span className="min-w-0 flex-1 truncate text-[10px] font-normal text-zinc-700">
           {section.title}
         </span>
         <ChevronDown
           className={[
-            "h-3 w-3 shrink-0 text-zinc-600 transition-transform duration-200 ease-out",
+            "h-3 w-3 shrink-0 text-zinc-500 transition-transform duration-200 ease-out",
             expanded ? "rotate-180" : "",
           ].join(" ")}
           strokeWidth={1.5}
@@ -176,7 +176,7 @@ function NavSection({
         />
       </button>
       {expanded ? (
-        <nav className="space-y-px border-t border-zinc-800/50 px-1 pb-1 pt-0.5" aria-label={section.title}>
+        <nav className="space-y-px border-t border-zinc-300/90 px-1 pb-1 pt-0.5" aria-label={section.title}>
           {section.items.map((item) => (
             <NavItem
               key={item.href}
@@ -214,7 +214,7 @@ function SidebarContent({
       },
       {
         id: "nav-users",
-        title: "User Management",
+        title: "User management",
         icon: UserCog,
         adminOnly: true,
         items: [
@@ -224,7 +224,7 @@ function SidebarContent({
       },
       {
         id: "nav-attendance",
-        title: "Attendance Management",
+        title: "Attendance management",
         icon: ClipboardList,
         items: [
           {
@@ -244,7 +244,7 @@ function SidebarContent({
       },
       {
         id: "nav-reports",
-        title: "Report Management",
+        title: "Report management",
         icon: ReceiptText,
         adminOnly: true,
         items: [
@@ -259,7 +259,7 @@ function SidebarContent({
       },
       {
         id: "nav-request-mgmt",
-        title: "Request Management",
+        title: "Request management",
         icon: Inbox,
         adminOnly: true,
         items: [
@@ -269,7 +269,7 @@ function SidebarContent({
       },
       {
         id: "nav-views",
-        title: "View & Opinions",
+        title: "View & opinions",
         icon: MessagesSquare,
         memberOnly: true,
         items: [{ href: "/dashboard/views/share", label: "Share your view", icon: PenLine, sub: false }],
@@ -290,7 +290,7 @@ function SidebarContent({
       },
       {
         id: "nav-account",
-        title: "Account Management",
+        title: "Account management",
         icon: UserCircle,
         items: [
           {
@@ -359,7 +359,7 @@ function SidebarContent({
     <div className="flex h-full min-h-0 flex-col">
       <div
         className={[
-          "mb-3 flex items-center gap-2.5 border-b border-zinc-800/70 px-0.5 pb-3",
+          "mb-3 flex items-center gap-2.5 border-b border-zinc-300/90 px-0.5 pb-3",
           collapsed ? "flex-col" : "",
         ].join(" ")}
       >
@@ -368,8 +368,8 @@ function SidebarContent({
         </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="text-[11px] font-light leading-tight tracking-tight text-white">Church Members</p>
-            <p className="text-[9px] font-light leading-tight text-zinc-500">Member & admin portal</p>
+            <p className="text-[11px] font-normal leading-tight tracking-tight text-zinc-900">Church members</p>
+            <p className="text-[9px] font-normal leading-tight text-zinc-600">Member & admin portal</p>
           </div>
         ) : null}
       </div>
@@ -387,11 +387,11 @@ function SidebarContent({
         ))}
       </div>
 
-      <div className="mt-auto border-t border-zinc-800/70 pt-2">
+      <div className="mt-auto border-t border-zinc-300/90 pt-2">
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center gap-1.5 rounded-md py-1 text-[10px] font-normal text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md py-1 text-[10px] font-normal text-zinc-600 transition hover:bg-zinc-300/60 hover:text-zinc-900"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <PanelLeft
@@ -432,7 +432,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 border-r border-zinc-800/70 bg-zinc-950 p-2.5 font-light shadow-xl shadow-zinc-950/35",
+          "fixed inset-y-0 left-0 z-50 border-r border-zinc-300/90 bg-zinc-200 p-2.5 font-normal text-zinc-900 shadow-xl shadow-zinc-900/10",
           "lg:static lg:z-0 lg:shrink-0 lg:shadow-none",
           "transition-[width] duration-200 ease-out",
           sidebarW,
